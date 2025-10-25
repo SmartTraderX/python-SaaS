@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from pydantic import BaseModel
 
 class Symbol(BaseModel):
-    symbolName: str
+    name: str
     theStrategyMatch: bool = False
 
 class OrderDetails(BaseModel):
@@ -12,21 +12,20 @@ class OrderDetails(BaseModel):
     symbol: List[Symbol] = []
     orderType: Optional[str]
     quantity: Optional[int]
-    validity: Optional[str]
+    # validity: Optional[str]
     SL: Optional[str]
     TP: Optional[str]
 
 class Strategy(Document):
-    userId: str
+    userId: str = None
     strategyName: Optional[str]
-    strategyType: Optional[str]
     category: Optional[str]
-    createdBy: Optional[str]
+    createdBy: Optional[str] = None
     description: Optional[str]
     timeframe: Optional[str]
     status: bool = False
-    condition: Optional[dict]
-    associatedBroker: Optional[str]
+    condition: Optional[list]
+    associatedBroker: Optional[str]=None
     expiryDate: datetime = datetime.now() + timedelta(days=7)
     orderDetails: Optional[OrderDetails]
     totalSubscriber: Optional[list] = []
