@@ -12,7 +12,7 @@ class Paper_Trade (Document):
     order_type : str = "Market"
     quantity :int
 
-    entry_prcice: float
+    entry_price: float
     exit_prcice: Optional[float] = None
     stop_loss: Optional[float] = None
     take_profit: Optional[float] = None

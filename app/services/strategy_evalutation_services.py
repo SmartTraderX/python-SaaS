@@ -5,6 +5,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, ".."))  # One level up
 sys.path.append(project_root)
 from utility.get_historical_data import getIntradayData , getHistoricalData
+from app.services.strategy_evalutation_services import (create_paper_Order)
 
 class NumberNode:
     def __init__(self , value):
@@ -107,90 +108,90 @@ class LogicalNode:
 
 
 # ---------------- Test -------------------
-strategy ={
-    "name": "test",
-    "timeframe": "1m",
-    "condition": 
-   [
-    {
-        "type": "indicator",
-        "category": "volume",
-        "name": "SMA-Volume",
-        "orderType": "value",
-        "params": {"period": 20, "field": "volume"},
-        "sourceAllowed": False
-    },
-    {
-        "type": "condition",
-        "name": ">"
-    },
-    {
-        "type": "indicator",
-        "category": "volume",
-        "name": "Volume",
-        "orderType": "value",
-        "params": {"field": None},
-        "sourceAllowed": False
-    },
-    {
-        "type": "logicalOperator",
-        "value": "And"
-    },
-    {
-        "type": "indicator",
-        "category": "momentum",
-        "name": "MACD-macd",
-        "orderType": "multi-line",
-        "lines": ["macd", "signal", "histogram"],
-        "params": {"fast": 12, "slow": 26, "signal": 9, "field": "close"},
-        "sourceAllowed": True
-    },
-    {
-        "type": "condition",
-        "name": ">"
-    },
-    {
-        "type": "indicator",
-        "category": "momentum",
-        "name": "MACD-signal",
-        "orderType": "multi-line",
-        "lines": ["macd", "signal", "histogram"],
-        "params": {"fast": 12, "slow": 26, "signal": 9, "field": "close"},
-        "sourceAllowed": True
-    },
-    {
-        "type": "logicalOperator",
-        "value": "And"
-    },
-    {
-        "type": "indicator",
-        "category": "trend",
-        "name": "SMA",
-        "orderType": "value",
-        "params": {"period": 50, "field": "close"},
-        "sourceAllowed": False
-    },
-    {
-        "type": "condition",
-        "name": ">"
-    },
-    {
-        "type": "indicator",
-        "category": "trend",
-        "name": "SMA",
-        "orderType": "value",
-        "params": {"period": 100, "field": "close"},
-        "sourceAllowed": False
-    }
-]
-,
-    "orderDetails": {
-        "symbol": [
-            {"symbolName": "SBIN", "isExecute": False},
-            # {"symbolName": "TATAMOTORS", "isExecute": False}
-        ]
-    }
-}
+# strategy ={
+#     "name": "test",
+#     "timeframe": "1m",
+#     "condition": 
+#    [
+#     {
+#         "type": "indicator",
+#         "category": "volume",
+#         "name": "SMA-Volume",
+#         "orderType": "value",
+#         "params": {"period": 20, "field": "volume"},
+#         "sourceAllowed": False
+#     },
+#     {
+#         "type": "condition",
+#         "name": ">"
+#     },
+#     {
+#         "type": "indicator",
+#         "category": "volume",
+#         "name": "Volume",
+#         "orderType": "value",
+#         "params": {"field": None},
+#         "sourceAllowed": False
+#     },
+#     {
+#         "type": "logicalOperator",
+#         "value": "And"
+#     },
+#     {
+#         "type": "indicator",
+#         "category": "momentum",
+#         "name": "MACD-macd",
+#         "orderType": "multi-line",
+#         "lines": ["macd", "signal", "histogram"],
+#         "params": {"fast": 12, "slow": 26, "signal": 9, "field": "close"},
+#         "sourceAllowed": True
+#     },
+#     {
+#         "type": "condition",
+#         "name": ">"
+#     },
+#     {
+#         "type": "indicator",
+#         "category": "momentum",
+#         "name": "MACD-signal",
+#         "orderType": "multi-line",
+#         "lines": ["macd", "signal", "histogram"],
+#         "params": {"fast": 12, "slow": 26, "signal": 9, "field": "close"},
+#         "sourceAllowed": True
+#     },
+#     {
+#         "type": "logicalOperator",
+#         "value": "And"
+#     },
+#     {
+#         "type": "indicator",
+#         "category": "trend",
+#         "name": "SMA",
+#         "orderType": "value",
+#         "params": {"period": 50, "field": "close"},
+#         "sourceAllowed": False
+#     },
+#     {
+#         "type": "condition",
+#         "name": ">"
+#     },
+#     {
+#         "type": "indicator",
+#         "category": "trend",
+#         "name": "SMA",
+#         "orderType": "value",
+#         "params": {"period": 100, "field": "close"},
+#         "sourceAllowed": False
+#     }
+# ]
+# ,
+#     "orderDetails": {
+#         "symbol": [
+#             {"symbolName": "SBIN", "isExecute": False},
+#             # {"symbolName": "TATAMOTORS", "isExecute": False}
+#         ]
+#     }
+# }
 
 def convertInNodes(expression , data):
 
@@ -222,16 +223,34 @@ import numpy as np
 import pandas as pd
 import talib as tb
 import threading
+import asyncio
 
 
 
-def worker(symbolName, strategy, results , lock):
+def worker(symbolName, strategy, results , lock , paper_Trade):
     try:
         timeframe = strategy['timeframe']
         condition = strategy['condition']
         data = getIntradayData(symbolName ,timeframe)
         result = parsedCondition(condition,data).evaluate()
-        
+
+        if paper_Trade and not data.empty:
+
+            entry_price = sl = tp = 0
+            if not data.empty:
+                entry_price = data['Close'].iloc[-1]
+                sl = entry_price *(1-2/100)
+                tp = entry_price *(1+5/100)
+                obj = {
+                    "symbol" : symbolName,
+                    "action": "BUY",
+                    "quantity" : 1,
+                    "entry_price" :entry_price ,
+                    "stop_loss" :sl ,
+                    "take_profit" :tp ,   
+                    "strategyId":strategy["_id"]
+                }
+                asyncio.run(create_paper_Order(obj))        
         with lock:
             results[symbolName] = result
         print(f"[{symbolName}] Done")
@@ -241,27 +260,25 @@ def worker(symbolName, strategy, results , lock):
             print(f'{symbolName} :Error :{e}')
         
  
-def EvaluteStrategy(strategy):
-    # result = []
-    
+
+def EvaluteStrategy(strategy ,paper_Trade = False):
     threads = []
     results = {}
     lock = threading.Lock()
 
-    symbols = strategy['orderDetails']['symbol']
-    # print(symbols)
-    
-    for idx,sym in enumerate(symbols):
-        symbolName = sym['symbolName']
-        # print('sym',sym)
-        t = threading.Thread(target=worker , args=(symbolName, strategy , results , lock))
+    # If strategy is a Beanie document, access orderDetails.symbol as list of objects
+    symbols = strategy.orderDetails.symbol  # <-- correct access
+
+    for idx, sym in enumerate(symbols):
+        symbolName = sym.name  # <-- use .name instead of ['symbolName']
+        t = threading.Thread(target=worker, args=(symbolName, strategy, results, lock ,paper_Trade))
         t.start()
         threads.append(t)
+    
     for t in threads:
         t.join()
     
     return results
-
 
 
 import threading
