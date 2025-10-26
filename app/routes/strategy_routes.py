@@ -1,12 +1,21 @@
 from fastapi import APIRouter , HTTPException  , Body
-from app.services.strategy_service import (create_strategy)
+from app.services.strategy_service import (create_strategy ,get_all_strategy)
 
 router = APIRouter(prefix='/strategy' , tags=['strategies'])
 
 @router.post('/create')
 async def create_strategy_route(data:dict = Body(...)):
+    try:
+        strategy= await create_strategy(data)
+        return {"message":'Strategy created', "data": strategy}
+    except  Exception as e:
+        raise HTTPException(status_code=500 , detail = str(e))
 
-    print(data)
 
-    strategy= await create_strategy(data)
-    return {"message":'Strategy created', "data": strategy}
+@router.get('/all-strategy')
+async def get_all_strategy_route():
+    try:
+        strategies = await get_all_strategy()
+        return {"message":'success', "data": strategies}
+    except  Exception as e:
+        raise HTTPException(status_code=500 , detail = str(e))

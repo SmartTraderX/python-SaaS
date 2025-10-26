@@ -5,3 +5,6 @@ async def create_strategy(data:dict):
     await strategy.insert()
     return strategy
      
+async def get_all_strategy():
+    strategies = await Strategy.find().to_list(length=None)  # fetch all
+    return strategies

@@ -1,4 +1,4 @@
-from beanie import Document
+from beanie import Document , PydanticObjectId
 from typing import Optional, List
 from datetime import datetime, timedelta
 from pydantic import BaseModel
@@ -17,7 +17,7 @@ class OrderDetails(BaseModel):
     TP: Optional[str]
 
 class Strategy(Document):
-    userId: str = None
+    userId: Optional[PydanticObjectId] = None
     strategyName: Optional[str]
     category: Optional[str]
     createdBy: Optional[str] = None

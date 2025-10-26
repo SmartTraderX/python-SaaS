@@ -1,0 +1,44 @@
+# 🧠 Environment variables (sensitive info)
+.env
+
+# 🐍 Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 📦 Virtual environments
+venv/
+env/
+ENV/
+Lib/
+Scripts/
+Include/
+
+# 🗂 IDE/Editor files
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# 📁 Build / packaging
+build/
+dist/
+*.egg-info/
+
+# 🧪 Test / coverage
+.coverage
+htmlcov/
+.tox/
+pytest_cache/
+.cache/
+
+# 📋 Logs
+*.log
+
+# 🧱 Database dumps or local data
+*.db
+*.sqlite3
+dump.rdb
+
+# 🔥 OS / Misc
+Thumbs.db
