@@ -2,6 +2,7 @@ from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
 from app.models.strategy_model import Strategy
 from app.core.config import setting
+from redis.asyncio import Redis
 import logging
 
 
@@ -18,3 +19,13 @@ async def init_db():
 
     except Exception as e:
         logger.error(f"❌ Failed to connect to MongoDB: {e}")
+
+async def init_redis():
+    try:
+        logger.info('redis connecting...')
+        redis = Redis.from_url(REDIS_URL)
+        logger.info('redis connected')
+        return redis
+
+    except Exception as e:
+        logger.error(f"❌ Failed to connect to Redis: {e}")    

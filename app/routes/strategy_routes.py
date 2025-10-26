@@ -1,7 +1,8 @@
 from fastapi import APIRouter , HTTPException  , Body
 from app.services.strategy_service import (create_strategy ,get_all_strategy)
+from app.services.strategy_service import (create_strategy ,get_all_strategy)
 
-router = APIRouter(prefix='/strategy' , tags=['strategies'])
+router = APIRouter(prefix='/strategy-management' , tags=['strategies'])
 
 @router.post('/create')
 async def create_strategy_route(data:dict = Body(...)):
@@ -19,3 +20,15 @@ async def get_all_strategy_route():
         return {"message":'success', "data": strategies}
     except  Exception as e:
         raise HTTPException(status_code=500 , detail = str(e))
+
+
+@router.post('/backtest-result')
+async def backtest_result(data:dict = Body(...)):
+    try:
+        result = await create_strategy(data)
+        return {"message":'success', "data": strategy}
+    except  Exception as e:
+        raise HTTPException(status_code=500 , detail = str(e))
+
+        
+
