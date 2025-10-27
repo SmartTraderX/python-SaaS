@@ -1,6 +1,5 @@
 from fastapi import APIRouter , HTTPException  , Body
 from app.services.strategy_service import (create_strategy ,get_all_strategy)
-from app.services.strategy_service import (create_strategy ,get_all_strategy)
 
 router = APIRouter(prefix='/strategy-management' , tags=['strategies'])
 

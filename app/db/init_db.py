@@ -1,6 +1,7 @@
 from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
 from app.models.strategy_model import Strategy
+from app.models.paper_trade_model import Paper_Trade
 from app.core.config import setting
 from redis.asyncio import Redis
 import logging
@@ -14,7 +15,7 @@ async def init_db():
         client = AsyncIOMotorClient(setting.MONGO_URI)
         db = client[setting.MONGO_DB]
 
-        await init_beanie(database=db, document_models=[Strategy])
+        await init_beanie(database=db, document_models=[Strategy , Paper_Trade])
         logger.info("✅ MongoDB connection successful!")
 
     except Exception as e:

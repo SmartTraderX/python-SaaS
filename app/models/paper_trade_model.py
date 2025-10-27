@@ -17,7 +17,7 @@ class Paper_Trade (Document):
     stop_loss: Optional[float] = None
     take_profit: Optional[float] = None
 
-    status = str ='OPEN'
+    status : str ='OPEN'
     pnl: Optional[float] = None                     # Profit/Loss after closing
     created_at: datetime = datetime.utcnow()        # Entry time
     updated_at: datetime = datetime.utcnow()

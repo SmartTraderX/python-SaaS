@@ -1,11 +1,20 @@
 import operator
 import sys
 import os
+import numpy as np
+import pandas as pd
+import talib as tb
+import asyncio
+import logging
+import threading
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, ".."))  # One level up
 sys.path.append(project_root)
 from utility.get_historical_data import getIntradayData , getHistoricalData
-from app.services.strategy_evalutation_services import (create_paper_Order)
+from app.services.paper_trade_service import (create_paper_Order)
+
+logger = logging.getLogger(__name__)
+
 
 class NumberNode:
     def __init__(self , value):
@@ -218,71 +227,85 @@ def parsedCondition(conditions ,data):
     return None
 
 
-
-import numpy as np
-import pandas as pd
-import talib as tb
-import threading
-import asyncio
-
-
-
-def worker(symbolName, strategy, results , lock , paper_Trade):
+def worker(symbolName, strategy, results, lock, paper_Trade, main_loop):
+    """
+    Worker function for evaluating a strategy and optionally creating a paper trade.
+    main_loop: the asyncio event loop from the main thread
+    """
     try:
-        timeframe = strategy['timeframe']
-        condition = strategy['condition']
-        data = getIntradayData(symbolName ,timeframe)
-        result = parsedCondition(condition,data).evaluate()
+        # Extract strategy info
+        timeframe = strategy.timeframe
+        condition = strategy.condition
 
-        if paper_Trade and not data.empty:
+        # Get intraday data
+        data = getIntradayData(symbolName, timeframe)
 
-            entry_price = sl = tp = 0
-            if not data.empty:
-                entry_price = data['Close'].iloc[-1]
-                sl = entry_price *(1-2/100)
-                tp = entry_price *(1+5/100)
-                obj = {
-                    "symbol" : symbolName,
-                    "action": "BUY",
-                    "quantity" : 1,
-                    "entry_price" :entry_price ,
-                    "stop_loss" :sl ,
-                    "take_profit" :tp ,   
-                    "strategyId":strategy["_id"]
-                }
-                asyncio.run(create_paper_Order(obj))        
+        # Evaluate condition
+        result = parsedCondition(condition, data).evaluate()
+        logger.info(f"[{symbolName}] Condition result: {result}")
+
+        # If result is True and paper trade enabled
+        if result and paper_Trade and not data.empty:
+            entry_price = data['Close'].iloc[-1]
+            sl = entry_price * (1 - 2 / 100)
+            tp = entry_price * (1 + 5 / 100)
+
+            obj = {
+                "symbol": symbolName,
+                "action": "BUY",
+                "quantity": 1,
+                "entry_price": entry_price,
+                "stop_loss": sl,
+                "take_profit": tp,
+                "strategyId": str(strategy.id),
+            }
+
+            # Schedule async DB insert on main event loop safely
+            future = asyncio.run_coroutine_threadsafe(create_paper_Order(obj), main_loop)
+            paper_trade_data = future.result()  # wait until complete
+            logger.info(f"Paper trade stored: {paper_trade_data}")
+
+        # Store result in shared dict
         with lock:
             results[symbolName] = result
-        print(f"[{symbolName}] Done")
+            logger.info(f"[{symbolName}] Done")
+
     except Exception as e:
         with lock:
-            results[symbolName] = f'Error{e}'
-            print(f'{symbolName} :Error :{e}')
-        
- 
+            results[symbolName] = f"Error: {e}"
+        logger.error(f"{symbolName} failed: {e}", exc_info=True)
 
-def EvaluteStrategy(strategy ,paper_Trade = False):
+
+def EvaluteStrategy(strategy, paper_Trade=False):
     threads = []
     results = {}
     lock = threading.Lock()
 
-    # If strategy is a Beanie document, access orderDetails.symbol as list of objects
-    symbols = strategy.orderDetails.symbol  # <-- correct access
+    # Get the main asyncio event loop from FastAPI or main thread
+    main_loop = asyncio.get_event_loop()
 
-    for idx, sym in enumerate(symbols):
-        symbolName = sym.name  # <-- use .name instead of ['symbolName']
-        t = threading.Thread(target=worker, args=(symbolName, strategy, results, lock ,paper_Trade))
+    # If strategy is a Beanie document, access orderDetails.symbol as list of objects
+    symbols = strategy.orderDetails.symbol
+
+    # Start a thread per symbol
+    for sym in symbols:
+        symbolName = sym.name
+        t = threading.Thread(
+            target=worker,
+            args=(symbolName, strategy, results, lock, paper_Trade, main_loop)  # pass main_loop
+        )
         t.start()
         threads.append(t)
-    
+
+    # Wait for all threads to finish
     for t in threads:
         t.join()
-    
+
     return results
 
 
-import threading
-import numpy as np
+
+
 
 
 def Backtest_Worker(symbolName, strategy, results, lock):
