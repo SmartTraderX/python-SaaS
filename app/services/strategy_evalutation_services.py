@@ -247,6 +247,7 @@ def worker(symbolName, strategy, results, lock, paper_Trade, main_loop):
         # If result is True and paper trade enabled
         if result and paper_Trade and not data.empty:
             entry_price = data['Close'].iloc[-1]
+            currentTime = data.index[-1]
             sl = entry_price * (1 - 2 / 100)
             tp = entry_price * (1 + 5 / 100)
 
@@ -257,6 +258,7 @@ def worker(symbolName, strategy, results, lock, paper_Trade, main_loop):
                 "entry_price": entry_price,
                 "stop_loss": sl,
                 "take_profit": tp,
+                "signal_time":data['timestamp'].iloc[-1],
                 "strategyId": str(strategy.id),
             }
 
