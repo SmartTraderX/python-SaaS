@@ -307,20 +307,23 @@ def EvaluteStrategy(strategy, paper_Trade=False):
 
 
 
-
-
-
 def Backtest_Worker(symbolName, strategy, results, lock):
     try:
-        print(f"{symbolName}: Thread started")  # Debug
+        print(f"🔹 {symbolName}: Thread started")
 
         condition = strategy['condition']
-        data = getIntradayData(symbolName ,interval="1d" ,period="5y")
-
-        # print(data)
+        data = getIntradayData(symbolName, interval="1d", period="5y")
 
         if data is None or data.empty:
-            raise Exception("No Data Returned")
+            print(f"⚠️ {symbolName}: No data returned")
+            with lock:
+                results.append({
+                    "symbol": symbolName,
+                    "error": "No data returned",
+                    "metrices": {},
+                    "trades": []
+                })
+            return
 
         position = None
         backtestResults = []
@@ -329,35 +332,31 @@ def Backtest_Worker(symbolName, strategy, results, lock):
         lossing_trade = 0
         lossing_pnl = 0
 
-
-        # Start after 50 candles for better indicator calculation
-        start_index = 50
+        start_index = 50  # ensure indicators have enough history
 
         for idx in range(start_index, len(data)):
-            newData = data.iloc[:idx]  # NumPy array for indicators
-            # print("close",newData['Close'])
-            # print("volume",newData['Volume'])
+            newData = data.iloc[:idx]
             close_price = newData['Close'].iloc[-1]
             currentTime = data.index[idx]
 
-            # print('signal start')
+            # safe condition evaluation
+            try:
+                signal = parsedCondition(condition, data.iloc[:idx]).evaluate()
+            except KeyError as ke:
+                print(f"⚠️ {symbolName}: Condition key error -> {ke}")
+                signal = False
+            except Exception as cond_err:
+                print(f"⚠️ {symbolName}: Condition evaluation error -> {cond_err}")
+                signal = False
 
-            signal = parsedCondition(condition, data.iloc[:idx]).evaluate()
-          
-
-
-            # Entry condition
-            # print('bhaar',signal)
+            # ENTRY condition
             if signal and position is None:
-                # print(signal)
                 atr = tb.ATR(newData['High'], newData['Low'], newData['Close'], timeperiod=14).iloc[-1]
-# Entry price
                 entry_price = close_price
                 entry_time = currentTime
+                sl_price = entry_price - atr * 1.5
+                tp_price = entry_price + atr * 3.0
 
-                # ATR-based SL and TP
-                sl_price = entry_price - atr * 1.5   # 1.5 ATR below entry
-                tp_price = entry_price + atr * 3.0   # 3 ATR above entry
                 position = {
                     "type": "Long",
                     "entry_price": entry_price,
@@ -365,17 +364,15 @@ def Backtest_Worker(symbolName, strategy, results, lock):
                     "sl_price": sl_price,
                     "tp_price": tp_price
                 }
-                # print(position)
-            # Exit conditions
+
+            # EXIT condition
             elif position is not None:
                 last_price = close_price
-
                 if last_price >= position['tp_price']:
                     position["exit_price"] = last_price
                     position["exit_time"] = currentTime
                     position["exit_reason"] = "TP Hit"
-                    
-                    # print(position)
+
                     backtestResults.append(position)
                     winning_pnl += last_price - position["entry_price"]
                     winning_trades += 1
@@ -385,58 +382,66 @@ def Backtest_Worker(symbolName, strategy, results, lock):
                     position["exit_price"] = last_price
                     position["exit_time"] = currentTime
                     position["exit_reason"] = "SL Hit"
+
                     backtestResults.append(position)
                     lossing_pnl += last_price - position["entry_price"]
                     lossing_trade += 1
                     position = None
 
-        # Store results safely
-        metrices  = {}
-        metrices['total_Trades' ] = len(backtestResults)
-        metrices['total_pnl'] = winning_pnl + lossing_pnl 
-        metrices["winning_pnl"] = winning_pnl
-        metrices['lossing_pnl'] = lossing_pnl
-        metrices["winning_trades"] = winning_trades
-        metrices["lossing_trade"] = lossing_trade
+        # --- Final Metrics ---
+        metrices = {
+            "total_trades": len(backtestResults),
+            "winning_trades": winning_trades,
+            "lossing_trades": lossing_trade,
+            "winning_pnl": round(winning_pnl, 2),
+            "lossing_pnl": round(lossing_pnl, 2),
+            "total_pnl": round(winning_pnl + lossing_pnl, 2),
+        }
 
-        if metrices['total_Trades'] > 0:
-                metrices['win_rate'] = round((metrices['winning_trades'] / metrices["total_Trades"] ) *100 , 2)
-        else :
-                metrices["win_rate (%)"] = 0.0
+        if metrices["total_trades"] > 0:
+            metrices["win_rate (%)"] = round((winning_trades / metrices["total_trades"]) * 100, 2)
+        else:
+            metrices["win_rate (%)"] = 0.0
+
+        # thread-safe result append
         with lock:
             results.append({
-                "symbol":symbolName,
-                'metrices' : metrices,
-                'trades' : backtestResults
+                "symbol": symbolName,
+                "metrices": metrices,
+                "trades": backtestResults
             })
-            
-            # print(f"{symbolName}: Thread finished")
+            print(f"✅ {symbolName}: Completed with {metrices['total_trades']} trades")
 
     except Exception as e:
+        # store the error safely
         with lock:
-            results[symbolName] = f"Error: {e}"
-            print(f"{symbolName}: Error: {e}")
+            results.append({
+                "symbol": symbolName,
+                "error": str(e),
+                "metrices": {},
+                "trades": []
+            })
+        print(f"❌ {symbolName}: Error -> {e}")
 
 
 def BacktestStrategy(strategy):
+    print("🚀 Backtest started for:", strategy["strategyName"])
     threads = []
     results = []
     lock = threading.Lock()
 
     symbols = strategy['orderDetails']['symbol']
-    # print("Symbols to process:", [s['symbolName'] for s in symbols])
 
-    # Start a thread per symbol
     for sym in symbols:
         symbolName = sym['name']
         t = threading.Thread(target=Backtest_Worker, args=(symbolName, strategy, results, lock))
         t.start()
         threads.append(t)
 
-    # Wait for all threads to finish
     for t in threads:
         t.join()
 
+    print("✅ All threads completed!")
     return results
 
 
