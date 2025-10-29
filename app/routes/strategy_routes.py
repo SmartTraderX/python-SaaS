@@ -25,7 +25,7 @@ async def get_all_strategy_route():
 @router.post('/backtest-result')
 async def backtest_result(data:dict = Body(...)):
     try:
-        result = await BacktestStrategy(data)
+        result = BacktestStrategy(data)
         return {"message":'success', "data": result}
     except  Exception as e:
         raise HTTPException(status_code=500 , detail = str(e))

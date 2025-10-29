@@ -11,7 +11,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, ".."))  # One level up
 sys.path.append(project_root)
 from utility.get_historical_data import getIntradayData , getHistoricalData
-from app.services.paper_trade_service import (create_paper_Order)
+# from app.services.paper_trade_service import (create_paper_Order)
 
 logger = logging.getLogger(__name__)
 
@@ -117,90 +117,6 @@ class LogicalNode:
 
 
 # ---------------- Test -------------------
-# strategy ={
-#     "name": "test",
-#     "timeframe": "1m",
-#     "condition": 
-#    [
-#     {
-#         "type": "indicator",
-#         "category": "volume",
-#         "name": "SMA-Volume",
-#         "orderType": "value",
-#         "params": {"period": 20, "field": "volume"},
-#         "sourceAllowed": False
-#     },
-#     {
-#         "type": "condition",
-#         "name": ">"
-#     },
-#     {
-#         "type": "indicator",
-#         "category": "volume",
-#         "name": "Volume",
-#         "orderType": "value",
-#         "params": {"field": None},
-#         "sourceAllowed": False
-#     },
-#     {
-#         "type": "logicalOperator",
-#         "value": "And"
-#     },
-#     {
-#         "type": "indicator",
-#         "category": "momentum",
-#         "name": "MACD-macd",
-#         "orderType": "multi-line",
-#         "lines": ["macd", "signal", "histogram"],
-#         "params": {"fast": 12, "slow": 26, "signal": 9, "field": "close"},
-#         "sourceAllowed": True
-#     },
-#     {
-#         "type": "condition",
-#         "name": ">"
-#     },
-#     {
-#         "type": "indicator",
-#         "category": "momentum",
-#         "name": "MACD-signal",
-#         "orderType": "multi-line",
-#         "lines": ["macd", "signal", "histogram"],
-#         "params": {"fast": 12, "slow": 26, "signal": 9, "field": "close"},
-#         "sourceAllowed": True
-#     },
-#     {
-#         "type": "logicalOperator",
-#         "value": "And"
-#     },
-#     {
-#         "type": "indicator",
-#         "category": "trend",
-#         "name": "SMA",
-#         "orderType": "value",
-#         "params": {"period": 50, "field": "close"},
-#         "sourceAllowed": False
-#     },
-#     {
-#         "type": "condition",
-#         "name": ">"
-#     },
-#     {
-#         "type": "indicator",
-#         "category": "trend",
-#         "name": "SMA",
-#         "orderType": "value",
-#         "params": {"period": 100, "field": "close"},
-#         "sourceAllowed": False
-#     }
-# ]
-# ,
-#     "orderDetails": {
-#         "symbol": [
-#             {"symbolName": "SBIN", "isExecute": False},
-#             # {"symbolName": "TATAMOTORS", "isExecute": False}
-#         ]
-#     }
-# }
 
 def convertInNodes(expression , data):
 
@@ -219,7 +135,7 @@ def parsedCondition(conditions ,data):
      
     for idx , con in enumerate(conditions):
         if con['type'] == "logicalOperator":
-            op = con['value'].upper()
+            op = con['name'].upper()
             left = parsedCondition(conditions[:idx] , data)
             right = parsedCondition(conditions[idx+1:] , data)
             return LogicalNode(left ,op,right)
@@ -341,10 +257,12 @@ def Backtest_Worker(symbolName, strategy, results, lock):
 
             # safe condition evaluation
             try:
-                signal = parsedCondition(condition, data.iloc[:idx]).evaluate()
-            except KeyError as ke:
-                print(f"⚠️ {symbolName}: Condition key error -> {ke}")
-                signal = False
+                node = parsedCondition(condition, data.iloc[:idx])
+                if node is None:
+                    print(f"⚠️ {symbolName}: parsedCondition() returned None")
+                    signal = False
+                else:
+                    signal = node.evaluate()
             except Exception as cond_err:
                 print(f"⚠️ {symbolName}: Condition evaluation error -> {cond_err}")
                 signal = False
@@ -399,9 +317,9 @@ def Backtest_Worker(symbolName, strategy, results, lock):
         }
 
         if metrices["total_trades"] > 0:
-            metrices["win_rate (%)"] = round((winning_trades / metrices["total_trades"]) * 100, 2)
+            metrices["win_rate"] = round((winning_trades / metrices["total_trades"]) * 100, 2)
         else:
-            metrices["win_rate (%)"] = 0.0
+            metrices["win_rate"] = 0.0
 
         # thread-safe result append
         with lock:
@@ -446,5 +364,80 @@ def BacktestStrategy(strategy):
 
 
 # Example usage:
-# results = pd.DataFrame( BacktestStrategy(strategy)).to_csv('results.csv')
+strategy = {
+  "strategyName": "Backtest",
+  "category": "High Frequency",
+  "description": "test",
+  "timeframe": "15m",
+
+  "conditionPreview": "SMA(50) > SMA(200) And MACD-signal(12, 26, 9) < MACD-macd(12, 26, 9)",
+
+  "condition": [
+    # ---- Condition 1 ----
+    {
+      "name": "SMA",
+      "type": "indicator",
+      "category": "trend",
+      "orderType": "value",
+      "params": {"period": "50"},
+      "sourceAllowed": True
+    },
+    {
+      "name": ">",
+      "type": "condition"
+    },
+    {
+      "name": "SMA",
+      "type": "indicator",
+      "category": "trend",
+      "orderType": "value",
+      "params": {"period": "200"},
+      "sourceAllowed": True
+    },
+
+    # ---- Logical operator ----
+    {
+      "type": "logicalOperator",
+      "name": "And"
+    },
+
+    # ---- Condition 2 ----
+    {
+      "name": "MACD-signal",
+      "type": "indicator",
+      "category": "momentum",
+      "orderType": "multi-line",
+      "params": {"fast": 12, "slow": 26, "signal": 9},
+      "lines": ["macd", "signal", "histogram"],
+      "sourceAllowed": True
+    },
+    {
+      "name": "<",
+      "type": "condition"
+    },
+    {
+      "name": "MACD-macd",
+      "type": "indicator",
+      "category": "momentum",
+      "orderType": "multi-line",
+      "params": {"fast": 12, "slow": 26, "signal": 9},
+      "lines": ["macd", "signal", "histogram"],
+      "sourceAllowed": True
+    }
+  ],
+
+  "orderDetails": {
+    "action": "BUY",
+    "orderType": "Futures",
+    "quantity": "750",
+    "SL": "2",
+    "TP": "5",
+    "symbol": [
+      {"name": "RELIANCE", "theStrategyMatch": False}
+    ]
+  }
+}
+
+
+# results = BacktestStrategy(strategy)
 # print("Backtest results:", results)
