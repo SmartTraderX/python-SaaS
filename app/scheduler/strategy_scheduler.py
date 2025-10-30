@@ -18,7 +18,7 @@ async def init_redis():
     try:
         logger.info("🔌 Connecting to Redis...")
         redis = aioredis.from_url(REDIS_URL, decode_responses=True)
-        logger.info("✅ Redis connected successfully.")
+        logger.info("Redis connected successfully.")
     except Exception as e:
         logger.error(f"❌ Failed to connect to Redis: {e}")
 

@@ -16,8 +16,8 @@ async def lifespan(app: FastAPI):
     try:
         logger.info("⏳ Connecting to MongoDB...")
         await init_db()
-        logger.info("✅ MongoDB connected successfully!")
-        # asyncio.create_task(start_scheduler())
+        logger.info("MongoDB connected successfully!")
+        asyncio.create_task(start_scheduler())
         yield
     finally:
         # Shutdown code

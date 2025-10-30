@@ -15,7 +15,6 @@ from utility.get_historical_data import getIntradayData , getHistoricalData
 
 logger = logging.getLogger(__name__)
 
-
 class NumberNode:
     def __init__(self , value):
         self.value = value
@@ -25,7 +24,6 @@ class NumberNode:
     
     def evaluate(self, candle):
         return float(self.value)
-
 
 class IndicatorNode:
     def __init__(self , name , params=None , field=None , data = None , timeframe = None):
@@ -94,7 +92,6 @@ class ComparatorNode:
         # print('right',right_val)
         return self.OPS[self.op](left_val, right_val)
 
-
 class LogicalNode:
     def __init__(self , left , op , right):
         self.left = left
@@ -114,10 +111,7 @@ class LogicalNode:
             return self.left.evaluate() or self.right.evaluate()
         else:
             raise ValueError(f"Unknown logical operator {self.op}")
-
-
 # ---------------- Test -------------------
-
 def convertInNodes(expression , data):
 
     exp1 = expression[0]
@@ -127,7 +121,6 @@ def convertInNodes(expression , data):
     right =IndicatorNode(exp2.get('name') ,exp2.get('params'),exp2.get('field') , data)
 
     return ComparatorNode(left, op, right)
-
 
 def parsedCondition(conditions ,data):
     if len(conditions) == 3 and conditions[1]['type'] == "condition":
@@ -141,7 +134,6 @@ def parsedCondition(conditions ,data):
             return LogicalNode(left ,op,right)
     # fallback
     return None
-
 
 def worker(symbolName, strategy, results, lock, paper_Trade, main_loop):
     """
@@ -193,7 +185,6 @@ def worker(symbolName, strategy, results, lock, paper_Trade, main_loop):
             results[symbolName] = f"Error: {e}"
         logger.error(f"{symbolName} failed: {e}", exc_info=True)
 
-
 def EvaluteStrategy(strategy, paper_Trade=False):
     threads = []
     results = {}
@@ -220,8 +211,6 @@ def EvaluteStrategy(strategy, paper_Trade=False):
         t.join()
 
     return results
-
-
 
 def Backtest_Worker(symbolName, strategy, results, lock):
     try:
@@ -341,7 +330,6 @@ def Backtest_Worker(symbolName, strategy, results, lock):
             })
         print(f"❌ {symbolName}: Error -> {e}")
 
-
 def BacktestStrategy(strategy):
     print("🚀 Backtest started for:", strategy["strategyName"])
     threads = []
@@ -361,7 +349,6 @@ def BacktestStrategy(strategy):
 
     print("✅ All threads completed!")
     return results
-
 
 # Example usage:
 strategy = {
