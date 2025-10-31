@@ -35,8 +35,6 @@ def getIntradayData(symbol: str, interval: str ="1m", period: str = "7d"):
         print(f"⚠️ Error fetching data for {symbol}: {e}")
         return None
 
-    
-
 
 def getHistoricalData(symbol: str, interval: str ="1d", period: str = "5y"):
     print(f"📊 Fetching data for: {symbol}")

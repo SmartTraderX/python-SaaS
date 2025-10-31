@@ -3,7 +3,7 @@ import sys
 import os
 import numpy as np
 import pandas as pd
-import talib as tb
+import talib as  tb
 import asyncio
 import logging
 import threading
@@ -11,7 +11,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, ".."))  # One level up
 sys.path.append(project_root)
 from utility.get_historical_data import getIntradayData , getHistoricalData
-# from app.services.paper_trade_service import (create_paper_Order)
+from app.services.paper_trade_service import (create_paper_Order)
 
 logger = logging.getLogger(__name__)
 
@@ -166,7 +166,7 @@ def worker(symbolName, strategy, results, lock, paper_Trade, main_loop):
                 "entry_price": entry_price,
                 "stop_loss": sl,
                 "take_profit": tp,
-                "signal_time":data['timestamp'].iloc[-1],
+                "signal_time":currentTime,
                 "strategyId": str(strategy.id),
             }
 

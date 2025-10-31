@@ -26,7 +26,7 @@ class UpstoxSDK:
         self.timeout = 15
 
     # -------------------
-    # 1️⃣ Get Access Token
+    # 1️Get Access Token
     # -------------------
     async def get_access_token(self, credentials: dict):
         try:
