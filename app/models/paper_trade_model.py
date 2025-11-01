@@ -16,8 +16,10 @@ class Paper_Trade (Document):
     exit_prcice: Optional[float] = None
     stop_loss: Optional[float] = None
     take_profit: Optional[float] = None
+    side: Optional[str] = None
+    
 
-    status : str ='OPEN'
+    status : str ='open'
     pnl: Optional[float] = None
     signal_time: Optional[str] = None                 # Profit/Loss after closing
     created_at: datetime = datetime.utcnow()        # Entry time

@@ -8,7 +8,7 @@ class UserModel(Document):
     name: Optional[str] = ''
     email: Optional[str] = ''
     mobileNo: Optional[str] = ''
-    userId: Optional[str] = ''
+    clientCode: Optional[str] = ''
     pwd: Optional[str] = ''
     apiKey: Optional[str] = ''
     secretKey: Optional[str] = ''
@@ -17,7 +17,9 @@ class UserModel(Document):
     refreshToken: Optional[str] = ''
     isDeleted: bool = False
     strategiesCount: int = 0
+    tokenExpiry: datetime = datetime.now()
     createdAt: datetime = datetime.now()
+    
 
     class Settings:
         name = "users"
