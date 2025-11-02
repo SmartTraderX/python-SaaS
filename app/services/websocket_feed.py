@@ -74,3 +74,4 @@ async def run_feed():
 
         async for msg in ws:
             await handle_tick(json.loads(msg))
+

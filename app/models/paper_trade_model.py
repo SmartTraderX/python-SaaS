@@ -6,7 +6,7 @@ from typing import Optional
 class Paper_Trade (Document):
     userId : Optional[PydanticObjectId] = None
     strategyId : Optional[PydanticObjectId] = None
-
+    symbolCode:Optional[str] = ""
     symbol : str
     action : str
     order_type : str = "Market"

@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from app.routes.strategy_routes import router as strategy_router
 from app.routes.order_routes import router as order_router
-from app.scheduler.strategy_scheduler import start_scheduler
+# from app.scheduler.strategy_scheduler import start_scheduler
+from app.scheduler.broker_scheduler import calculate_sl_tp
 from app.db.init_db import init_db  # Make sure you have a shutdown function
 from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,8 +18,9 @@ async def lifespan(app: FastAPI):
         logger.info("⏳ Connecting to MongoDB...")
         await init_db()
         logger.info("MongoDB connected successfully!")
-        asyncio.create_task(start_scheduler())
+        # asyncio.create_task(start_scheduler())
         # asyncio.create_task(run_feed())
+        asyncio.create_task(calculate_sl_tp("6905f6e134e7250e9e8b3389"))
         yield
     finally:
         # Shutdown code

@@ -4,7 +4,10 @@ from logzero import logger
 from datetime import datetime, timedelta
 from app.models.user_model import UserModel  # assuming you put your UserModel in models/user.py
 from app.models.paper_trade_model import Paper_Trade # assuming you put your UserModel in models/user.py
+# from models.user_model import UserModel  # assuming you put your UserModel in models/user.py
+# from models.paper_trade_model import Paper_Trade
 from SmartApi.smartWebSocketV2 import SmartWebSocketV2
+from beanie import Document , PydanticObjectId
 import asyncio
 import json
 
@@ -13,7 +16,7 @@ MODE = 1
 
 import logging
 
-logger = logging(__name__)
+logger = logging.getLogger(__name__)
 # -------------------------------
 # Async SmartAPI Login Function
 # -------------------------------
@@ -25,11 +28,11 @@ async def login_smartapi():
     totp_secret = "2JREMUQNBZJZ62HC5ZWULWS4HE"
 
     # 🔹 Find existing user
-    user = await UserModel.find_one({"userId": clientCode, "isDeleted": False})
+    user = await UserModel.find_one({"clientCode": clientCode, "isDeleted": False})
 
     # If user not found — create new SmartAPI session
     if not user:
-        logger.info("User not found in DB — logging in to SmartAPI...")
+        print("User not found in DB — logging in to SmartAPI...")
 
         smartApi = SmartConnect(api_key)
         try:
@@ -62,7 +65,7 @@ async def login_smartapi():
             isDeleted=False,
         )
         await new_user.insert()
-        logger.info(" New user saved to DB.")
+        print(" New user saved to DB.")
 
         return {
             "smartApi": smartApi,
@@ -75,13 +78,13 @@ async def login_smartapi():
 
     #  If user already exists — reuse tokens
     else:
-        logger.info("User found in DB — checking token validity...")
+        print("User found in DB — checking token validity...")
         smartApi = SmartConnect(user.apiKey or api_key)
 
         try:
             profile = smartApi.getProfile(user.refreshToken)
             if profile.get("status"):
-                logger.info(" Existing SmartAPI tokens are valid.")
+                print(" Existing SmartAPI tokens are valid.")
                 return {
                     "smartApi": smartApi,
                     "authToken": user.authToken,
@@ -94,7 +97,7 @@ async def login_smartapi():
             logger.warning(f"⚠️ Token expired or invalid: {e}")
 
         # 🔄 Re-login if token expired
-        logger.info("Re-logging in to SmartAPI...")
+        print("Re-logging in to SmartAPI...")
 
         try:
             totp = pyotp.TOTP(totp_secret).now()
@@ -111,10 +114,10 @@ async def login_smartapi():
             user.authToken = authToken
             user.refreshToken = refreshToken
             user.feedToken = feedToken
-            user.expiryTime = datetime.now()
+            user.tokenExpiry = datetime.now()
             await user.save()
 
-            logger.info("Tokens refreshed and saved to DB.")
+            print("Tokens refreshed and saved to DB.")
 
             profile = smartApi.getProfile(refreshToken)
 
@@ -133,11 +136,11 @@ async def login_smartapi():
 
 async def is_token_expire(user):
     try:
-        expirytime = user.get("tokenExpiry")
-        if not expirytime:
+        tokenExpiry = user.tokenExpiry
+        if not tokenExpiry:
             return True
         
-        if datetime.utcnow() > expirytime:
+        if datetime.utcnow() > tokenExpiry:
             return True
         return False
     except Exception:
@@ -146,19 +149,19 @@ async def is_token_expire(user):
 
 async def calculate_sl_tp(user_id):
     try:
-        all_paper_trades_task  = Paper_Trade.get({"status":"open"}).to_list()
-        user_task   = UserModel.find_One({"_id" : user_id})
-
-        all_paper_trades , user = await asyncio.gather(all_paper_trades_task ,user_task )
+        all_paper_trades_cursor   = Paper_Trade.find({"status":"open"})
+        all_paper_trades   = await all_paper_trades_cursor.to_list()
+        user   = await UserModel.find_one({"_id" :PydanticObjectId(user_id)})
 
         if not all_paper_trades or not user:
-            logger.info('No open Paper trades or user')
+            print(all_paper_trades)
+            print(user)
+            print('No open Paper trades or user')
             return 
-        AUTH_TOKEN = user.get("authToken")
-        API_KEY = user.get("apiKey")
-        CLIENT_CODE = user.get("clientCode")
-        FEED_TOKEN = user.get("feedToken")
-
+        AUTH_TOKEN = user.authToken       
+        API_KEY = user.apiKey
+        CLIENT_CODE = user.clientCode        
+        FEED_TOKEN = user.feedToken     
         if await is_token_expire(user):
             logging.info('token expired , re-logging in SmartApi...')
             login_result = await login_smartapi()
@@ -169,25 +172,30 @@ async def calculate_sl_tp(user_id):
             AUTH_TOKEN = login_result["authToken"]
             FEED_TOKEN = login_result["feedToken"]
 
+    
+        print(all_paper_trades)
+        for trade in all_paper_trades:
+            print(trade.symbolCode)
 
-        symbol_codes = list({trade["symbolCode"] for trade in all_paper_trades})
+        symbol_codes = list({trade.symbolCode for trade in all_paper_trades})
 
         if not symbol_codes:
-            logger.info('No symbols found in open trades')
+            print('No symbols found in open trades')
             return 
         
-        logger.info(f'subscbribing to {len(symbol_codes)} symbols:{symbol_codes}')
+        print(f'subscbribing to {len(symbol_codes)} symbols:{symbol_codes}')
 
            # convert into SmartAPI token list format
         token_list = [{"exchangeType":1 , "tokens":symbol_codes }]
         CORRELATION_ID = f"sl_tp_{user_id}"
         MODE = 1 
 
-        # websocket setup 
+        # # websocket setup 
         sws = SmartWebSocketV2(AUTH_TOKEN , API_KEY , CLIENT_CODE,FEED_TOKEN)
 
         async def handle_tick(message):
             try:
+                print(message)
                 data = json.loads(message)
                 for tick in data.get("data",[]):
                     token = str(tick.get("token"))
@@ -222,14 +230,14 @@ async def calculate_sl_tp(user_id):
             asyncio.create_task(handle_tick(message))
 
         def on_open(wsapp):
-            logger.info(" WebSocket connected.")
+            print(" WebSocket connected.")
             sws.subscribe(CORRELATION_ID, MODE, token_list)
 
         def on_error(wsapp, error):
             logger.error(f"WebSocket error: {error}")
 
         def on_close(wsapp):
-            logger.info("🔒 WebSocket closed.")
+            print("🔒 WebSocket closed.")
 
         # attach
         sws.on_data = on_data
@@ -244,8 +252,6 @@ async def calculate_sl_tp(user_id):
 
     except Exception as e:
         logger.error(f"calculate_sl_tp error: {e}")  
-
-
         
 async def trgigger_order(trade , reason , price):
     try:
@@ -258,9 +264,11 @@ async def trgigger_order(trade , reason , price):
 
             }
         })
-        logger.info(f"{reason} triggered for {trade['symbolCode']} at {price}")
+        print(f"{reason} triggered for {trade['symbolCode']} at {price}")
     except Exception as e:
             logger.error(f"Trigger order error: {e}")
+
+
 
 
 
