@@ -20,7 +20,7 @@ async def lifespan(app: FastAPI):
         logger.info("MongoDB connected successfully!")
         # asyncio.create_task(start_scheduler())
         # asyncio.create_task(run_feed())
-        asyncio.create_task(calculate_sl_tp("6905f6e134e7250e9e8b3389"))
+        # asyncio.create_task(calculate_sl_tp("6905f6e134e7250e9e8b3389"))
         yield
     finally:
         # Shutdown code

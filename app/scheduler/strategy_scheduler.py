@@ -39,6 +39,7 @@ async def worker(timeframe):
             strategy = await Strategy.get(strategy_id)
             if strategy:
                 result = EvaluteStrategy(strategy ,True)
+
                 print('after result', result)
 
 # ---------------- Initial DB Load ---------------- #

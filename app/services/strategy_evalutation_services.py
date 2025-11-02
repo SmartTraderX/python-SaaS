@@ -11,7 +11,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, ".."))  # One level up
 sys.path.append(project_root)
 from utility.get_historical_data import getIntradayData , getHistoricalData
-from app.services.paper_trade_service import (create_paper_Order)
+# from app.services.paper_trade_service import (create_paper_Order)
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,21 @@ class IndicatorNode:
     
     def evaluate(self):
         val = None
-        if self.name.lower() == "volume":
+
+        # handling two case first is close price and 2 is noraml value
+        if self.name.lower() == "value":
+            val = int(self.params.get("value", 0))
+
+        elif self.name.lower()== "closeprice":
+            para = int(self.params.get('value',0))
+            val = float(self.data['Close'].iloc[-1])
+         
+        #  indicator clacutating 
+        elif self.name.lower() == "rsi":
+            period = int( self.params.get("period", 20) if isinstance(self.params, dict) else 20)
+            val = float(tb.RSI(self.data['Close'], timeperiod=period).iloc[-1])
+          
+        elif self.name.lower() == "volume":
             val = float(self.data['Volume'].iloc[-1])
 
         elif self.name.lower() in ["sma"]:
@@ -104,7 +118,7 @@ class LogicalNode:
     def evaluate(self):
 
         if self.op == "AND":
-            # print('print-left',self.left)
+            # print(f'print-left {self.left} print-e=rigth ,)
             # print('print-right',self.right)
             return self.left.evaluate() and self.right.evaluate()
         elif self.op == "OR":
@@ -123,17 +137,56 @@ def convertInNodes(expression , data):
     return ComparatorNode(left, op, right)
 
 def parsedCondition(conditions ,data):
+
+    if not conditions or len(conditions) == 0:
+        return None
+    
+
     if len(conditions) == 3 and conditions[1]['type'] == "condition":
        return convertInNodes(conditions ,data)
-     
+
+    logic_ops =[]
+    parts = []
+    start = 0
+
+
     for idx , con in enumerate(conditions):
         if con['type'] == "logicalOperator":
-            op = con['name'].upper()
-            left = parsedCondition(conditions[:idx] , data)
-            right = parsedCondition(conditions[idx+1:] , data)
-            return LogicalNode(left ,op,right)
-    # fallback
-    return None
+
+            logic_ops.append(con['name'].upper())
+            parts.append(conditions[start:idx])
+            start = idx + 1
+    parts.append(conditions[start:])        
+
+    nodes =[]
+
+    for part in parts:
+        node = None
+        # Handle sub-parts of variable lengths
+        if len(part) >= 3:
+            # Use last 3 elements if too long
+            if part[-2]['type'] == 'condition':
+                node = convertInNodes(part[-3:], data)
+            else:
+                node = parsedCondition(part, data)
+        elif len(part) == 3:
+            node = convertInNodes(part, data)
+        else:
+            continue  # skip incomplete ones
+        if node:
+            nodes.append(node)
+
+        # 🪢 Chain logical operators left-to-right
+    if not nodes:
+        return None
+
+    result = nodes[0]
+    for idx, op in enumerate(logic_ops):
+        if idx + 1 < len(nodes):
+            result = LogicalNode(result, op, nodes[idx + 1])
+
+    return result        
+
 
 def worker(symbolName, strategy, results, lock, paper_Trade, main_loop):
     """
@@ -185,6 +238,57 @@ def worker(symbolName, strategy, results, lock, paper_Trade, main_loop):
             results[symbolName] = f"Error: {e}"
         logger.error(f"{symbolName} failed: {e}", exc_info=True)
 
+
+def worker_test(symbolName, strategy, results, lock, paper_Trade, main_loop):
+    """
+    Worker function for evaluating a strategy and optionally creating a paper trade.
+    main_loop: the asyncio event loop from the main thread
+    """
+    try:
+        # Extract strategy info
+        timeframe = strategy["timeframe"]
+        condition = strategy["condition"]
+
+        # Get intraday data
+        data = getIntradayData(symbolName, timeframe)
+
+        # Evaluate condition
+        result = parsedCondition(condition, data).evaluate()
+        logger.info(f"[{symbolName}] Condition result: {result}")
+
+        # If result is True and paper trade enabled
+        if result and paper_Trade and not data.empty:
+            entry_price = data['Close'].iloc[-1]
+            currentTime = data.index[-1]
+            sl = entry_price * (1 - 2 / 100)
+            tp = entry_price * (1 + 5 / 100)
+
+            obj = {
+                "symbol": symbolName,
+                "action": "BUY",
+                "quantity": 1,
+                "entry_price": entry_price,
+                "stop_loss": sl,
+                "take_profit": tp,
+                "signal_time":currentTime,
+                "strategyId": str(strategy.id),
+            }
+
+            # Schedule async DB insert on main event loop safely
+            # future = asyncio.run_coroutine_threadsafe(create_paper_Order(obj), main_loop)
+            # paper_trade_data = future.result()  # wait until complete
+            # logger.info(f"Paper trade stored: {paper_trade_data}")
+
+        # Store result in shared dict
+        with lock:
+            results[symbolName] = result
+            logger.info(f"[{symbolName}] Done")
+
+    except Exception as e:
+        with lock:
+            results[symbolName] = f"Error: {e}"
+        logger.error(f"{symbolName} failed: {e}", exc_info=True)
+
 def EvaluteStrategy(strategy, paper_Trade=False):
     threads = []
     results = {}
@@ -201,6 +305,32 @@ def EvaluteStrategy(strategy, paper_Trade=False):
         symbolName = sym.name
         t = threading.Thread(
             target=worker,
+            args=(symbolName, strategy, results, lock, paper_Trade, main_loop)  # pass main_loop
+        )
+        t.start()
+        threads.append(t)
+
+    # Wait for all threads to finish
+    for t in threads:
+        t.join()
+
+    return results
+def EvaluteStrategy_Testing(strategy, paper_Trade=False):
+    threads = []
+    results = {}
+    lock = threading.Lock()
+
+    # Get the main asyncio event loop from FastAPI or main thread
+    main_loop = asyncio.get_event_loop()
+
+    # If strategy is a Beanie document, access orderDetails.symbol as list of objects
+    symbols = strategy["orderDetails"]["symbol"]
+
+    # Start a thread per symbol
+    for sym in symbols:
+        symbolName = sym["name"]
+        t = threading.Thread(
+            target=worker_test,
             args=(symbolName, strategy, results, lock, paper_Trade, main_loop)  # pass main_loop
         )
         t.start()
@@ -239,6 +369,8 @@ def Backtest_Worker(symbolName, strategy, results, lock):
 
         start_index = 50  # ensure indicators have enough history
 
+        # print('data ', data)
+
         for idx in range(start_index, len(data)):
             newData = data.iloc[:idx]
             close_price = newData['Close'].iloc[-1]
@@ -257,6 +389,9 @@ def Backtest_Worker(symbolName, strategy, results, lock):
                 signal = False
 
             # ENTRY condition
+
+            # print('signal ', signal)
+            
             if signal and position is None:
                 atr = tb.ATR(newData['High'], newData['Low'], newData['Close'], timeperiod=14).iloc[-1]
                 entry_price = close_price
@@ -275,7 +410,9 @@ def Backtest_Worker(symbolName, strategy, results, lock):
             # EXIT condition
             elif position is not None:
                 last_price = close_price
-                if last_price >= position['tp_price']:
+                high = newData['High'].iloc[-1]
+                low = newData['Low'].iloc[-1]
+                if high >= position['tp_price']:
                     position["exit_price"] = last_price
                     position["exit_time"] = currentTime
                     position["exit_reason"] = "TP Hit"
@@ -285,7 +422,7 @@ def Backtest_Worker(symbolName, strategy, results, lock):
                     winning_trades += 1
                     position = None
 
-                elif last_price <= position['sl_price']:
+                elif low <= position['sl_price']:
                     position["exit_price"] = last_price
                     position["exit_time"] = currentTime
                     position["exit_reason"] = "SL Hit"
@@ -352,21 +489,24 @@ def BacktestStrategy(strategy):
 
 # Example usage:
 strategy = {
-  "strategyName": "Backtest",
-  "category": "High Frequency",
-  "description": "test",
+  "_id": "690767bade68b5e0109817c1",
+  "userId": None,
+  "strategyName": "Testing strategy",
+  "category": "Swing",
+  "description": "testing ",
   "timeframe": "15m",
-
-  "conditionPreview": "SMA(50) > SMA(200) And MACD-signal(12, 26, 9) < MACD-macd(12, 26, 9)",
-
+  "status": False,
+  "associatedBroker": None,
+  "createdBy": None,
+  "createdAt": "2025-11-02T19:05:08.732000",
+  "expiryDate": "2025-11-09T19:05:08.732000",
   "condition": [
-    # ---- Condition 1 ----
     {
       "name": "SMA",
       "type": "indicator",
       "category": "trend",
       "orderType": "value",
-      "params": {"period": "50"},
+      "params": { "period": 50 },
       "sourceAllowed": True
     },
     {
@@ -378,24 +518,19 @@ strategy = {
       "type": "indicator",
       "category": "trend",
       "orderType": "value",
-      "params": {"period": "200"},
+      "params": { "period": 200 },
       "sourceAllowed": True
     },
-
-    # ---- Logical operator ----
     {
-      "type": "logicalOperator",
-      "name": "And"
+      "name": "And",
+      "type": "logicalOperator"
     },
-
-    # ---- Condition 2 ----
     {
-      "name": "MACD-signal",
+      "name": "RSI",
       "type": "indicator",
       "category": "momentum",
-      "orderType": "multi-line",
-      "params": {"fast": 12, "slow": 26, "signal": 9},
-      "lines": ["macd", "signal", "histogram"],
+      "orderType": "value",
+      "params": { "period": 14 },
       "sourceAllowed": True
     },
     {
@@ -403,27 +538,58 @@ strategy = {
       "type": "condition"
     },
     {
+      "name": "value",
+      "type": "indicator",
+      "params": { "value": 50 }
+    },
+    {
+      "name": "And",
+      "type": "logicalOperator"
+    },
+    {
       "name": "MACD-macd",
       "type": "indicator",
       "category": "momentum",
       "orderType": "multi-line",
-      "params": {"fast": 12, "slow": 26, "signal": 9},
+      "params": { "fast": 12, "slow": 26, "signal": 9 },
+      "lines": ["macd", "signal", "histogram"],
+      "sourceAllowed": True
+    },
+    {
+      "name": ">",
+      "type": "condition"
+    },
+    {
+      "name": "MACD-signal",
+      "type": "indicator",
+      "category": "momentum",
+      "orderType": "multi-line",
+      "params": { "fast": 12, "slow": 26, "signal": 9 },
       "lines": ["macd", "signal", "histogram"],
       "sourceAllowed": True
     }
   ],
-
   "orderDetails": {
     "action": "BUY",
-    "orderType": "Futures",
-    "quantity": "750",
-    "SL": "2",
-    "TP": "5",
     "symbol": [
-      {"name": "RELIANCE", "theStrategyMatch": False}
+      {
+        "id": "690767bade68b5e0109817bf",
+        "name": "SBIN",
+        "theStrategyMatch": False,
+        "symbolCode": "3045"
+      },
+      {
+        "id": "690767bade68b5e0109817c0",
+        "name": "RELIANCE",
+        "theStrategyMatch": False,
+        "symbolCode": "2885"
+      }
     ]
-  }
+  },
+  "tags": [],
+  "totalSubscriber": []
 }
+
 
 
 # results = BacktestStrategy(strategy)

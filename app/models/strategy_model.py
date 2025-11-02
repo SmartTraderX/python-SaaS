@@ -1,11 +1,15 @@
 from beanie import Document , PydanticObjectId
 from typing import Optional, List
 from datetime import datetime, timedelta
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+from bson import ObjectId
 
 class Symbol(BaseModel):
+    id:PydanticObjectId =Field(default_factory = ObjectId)
     name: str
-    theStrategyMatch: bool = False
+    theStrategyMatch: bool = False,
+    symbolCode: Optional[str]
+    
 
 class OrderDetails(BaseModel):
     action: Optional[str]
