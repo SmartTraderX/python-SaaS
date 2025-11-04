@@ -199,18 +199,18 @@ async def calculate_sl_tp(user_id):
                 data = json.loads(message)
                 for tick in data.get("data",[]):
                     token = str(tick.get("token"))
-                    ltp = float(tick.get("ltp",0))
+                    ltp = float(tick.get("ltp",0))/100
 
                     # check for SL/TP trigger
 
                     for trade in all_paper_trades:
                         if str(trade["symbolCode"]) != token:
                             continue
-                        side = trade['side']
+                        side = trade['action']
                         sl = float(trade["stopLoss"])
                         tp = float(trade["takeProfit"])
 
-                        if side == "Buy":
+                        if side == "BUY":
                             if ltp <= sl:
                                 await trgigger_order(trade, "StopLoss",ltp)
 
@@ -227,6 +227,7 @@ async def calculate_sl_tp(user_id):
                 raise Exception("Error")
             
         def on_data(wsapp, message):
+            print("message",message)
             asyncio.create_task(handle_tick(message))
 
         def on_open(wsapp):
@@ -248,7 +249,9 @@ async def calculate_sl_tp(user_id):
         # -------------------------
         #Start WebSocket
         # -------------------------
-        sws.connect()
+        loop =asyncio.get_event_loop()
+        await loop.run_in_executor(None,sws.connect())
+        
 
     except Exception as e:
         logger.error(f"calculate_sl_tp error: {e}")  

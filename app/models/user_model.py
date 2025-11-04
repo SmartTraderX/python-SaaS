@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 class UserModel(Document):
     name: Optional[str] = ''
+    margin:float = 800000.00
     email: Optional[str] = ''
     mobileNo: Optional[str] = ''
     clientCode: Optional[str] = ''

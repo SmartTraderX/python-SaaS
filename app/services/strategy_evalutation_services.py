@@ -11,7 +11,7 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, ".."))  # One level up
 sys.path.append(project_root)
 from utility.get_historical_data import getIntradayData , getHistoricalData
-# from app.services.paper_trade_service import (create_paper_Order)
+from app.services.paper_trade_service import (create_paper_Order)
 
 logger = logging.getLogger(__name__)
 
@@ -215,7 +215,7 @@ def worker(symbolName, strategy, results, lock, paper_Trade, main_loop):
             obj = {
                 "symbol": symbolName,
                 "action": "BUY",
-                "quantity": 1,
+                "quantity": 500,
                 "entry_price": entry_price,
                 "stop_loss": sl,
                 "take_profit": tp,
@@ -237,6 +237,35 @@ def worker(symbolName, strategy, results, lock, paper_Trade, main_loop):
         with lock:
             results[symbolName] = f"Error: {e}"
         logger.error(f"{symbolName} failed: {e}", exc_info=True)
+
+
+def EvaluteStrategy(strategy, paper_Trade=False):
+    threads = []
+    results = {}
+    lock = threading.Lock()
+
+    # Get the main asyncio event loop from FastAPI or main thread
+    main_loop = asyncio.get_event_loop()
+
+    # If strategy is a Beanie document, access orderDetails.symbol as list of objects
+    symbols = strategy.orderDetails.symbol
+
+    # Start a thread per symbol
+    for sym in symbols:
+        symbolName = sym.name
+        t = threading.Thread(
+            target=worker,
+            args=(symbolName, strategy, results, lock, paper_Trade, main_loop)  # pass main_loop
+        )
+        t.start()
+        threads.append(t)
+
+    # Wait for all threads to finish
+    for t in threads:
+        t.join()
+
+    return results
+
 
 
 def worker_test(symbolName, strategy, results, lock, paper_Trade, main_loop):
@@ -289,32 +318,6 @@ def worker_test(symbolName, strategy, results, lock, paper_Trade, main_loop):
             results[symbolName] = f"Error: {e}"
         logger.error(f"{symbolName} failed: {e}", exc_info=True)
 
-def EvaluteStrategy(strategy, paper_Trade=False):
-    threads = []
-    results = {}
-    lock = threading.Lock()
-
-    # Get the main asyncio event loop from FastAPI or main thread
-    main_loop = asyncio.get_event_loop()
-
-    # If strategy is a Beanie document, access orderDetails.symbol as list of objects
-    symbols = strategy.orderDetails.symbol
-
-    # Start a thread per symbol
-    for sym in symbols:
-        symbolName = sym.name
-        t = threading.Thread(
-            target=worker,
-            args=(symbolName, strategy, results, lock, paper_Trade, main_loop)  # pass main_loop
-        )
-        t.start()
-        threads.append(t)
-
-    # Wait for all threads to finish
-    for t in threads:
-        t.join()
-
-    return results
 def EvaluteStrategy_Testing(strategy, paper_Trade=False):
     threads = []
     results = {}

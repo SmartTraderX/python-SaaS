@@ -1,13 +1,35 @@
 from app.models.paper_trade_model import Paper_Trade
+from app.models.user_model import UserModel
 import logging
+from bson import ObjectId
 logger = logging.getLogger(__name__)
 
 async def create_paper_Order(data:dict):
-    paper_order = Paper_Trade(**data)
-    await paper_order.insert()
-    logger.info("new paper trade is store")
+    try :
+        user =await UserModel.get(ObjectId("6905f6e134e7250e9e8b3389"))
+        if not user:
+            raise Exception('User Not Found')
+        
+        required_margin  =  data["quantity"] * data["entry_price"]
+        if user.margin <  required_margin:
+            raise Exception('Insuffecient Balance !')
+        
+        paper_order = Paper_Trade(**data)
+        await paper_order.insert()
+        logger.info("new paper trade is store")
 
-    return paper_order
+        logger.info('Updating User Account')
+
+        user.margin -= required_margin
+        await user.save()
+        logger.info("User account updated")
+
+    except Exception as e:
+        raise Exception(f'Error:{e}')
+
+
+
+# async def close_paper_trade(id)
 
 
 async def get_all_paper_trades():
