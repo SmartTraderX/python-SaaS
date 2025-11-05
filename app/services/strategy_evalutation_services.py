@@ -12,6 +12,8 @@ project_root = os.path.abspath(os.path.join(current_dir, ".."))  # One level up
 sys.path.append(project_root)
 from utility.get_historical_data import getIntradayData , getHistoricalData
 from app.services.paper_trade_service import (create_paper_Order)
+from app.services.strategy_service import (mark_symbol_match)
+from app.models.strategy_model import Strategy
 
 logger = logging.getLogger(__name__)
 
@@ -188,7 +190,7 @@ def parsedCondition(conditions ,data):
     return result        
 
 
-def worker(symbolName, strategy, results, lock, paper_Trade, main_loop):
+def worker(symbolName, symbolid, strategy, results, lock, paper_Trade, main_loop):
     """
     Worker function for evaluating a strategy and optionally creating a paper trade.
     main_loop: the asyncio event loop from the main thread
@@ -219,14 +221,17 @@ def worker(symbolName, strategy, results, lock, paper_Trade, main_loop):
                 "entry_price": entry_price,
                 "stop_loss": sl,
                 "take_profit": tp,
-                "signal_time":currentTime,
+                "signal_time": currentTime,
                 "strategyId": str(strategy.id),
             }
 
             # Schedule async DB insert on main event loop safely
             future = asyncio.run_coroutine_threadsafe(create_paper_Order(obj), main_loop)
-            paper_trade_data = future.result()  # wait until complete
+            paper_trade_data = future.result()  # Wait for completion
             logger.info(f"Paper trade stored: {paper_trade_data}")
+
+            # Mark matched symbol asynchronously
+            asyncio.run_coroutine_threadsafe(mark_symbol_match(strategy.id, symbolid), main_loop)
 
         # Store result in shared dict
         with lock:
@@ -253,9 +258,10 @@ def EvaluteStrategy(strategy, paper_Trade=False):
     # Start a thread per symbol
     for sym in symbols:
         symbolName = sym.name
+        symbolid =sym.id
         t = threading.Thread(
             target=worker,
-            args=(symbolName, strategy, results, lock, paper_Trade, main_loop)  # pass main_loop
+            args=(symbolName,symbolid, strategy, results, lock, paper_Trade, main_loop)  # pass main_loop
         )
         t.start()
         threads.append(t)

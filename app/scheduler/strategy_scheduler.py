@@ -1,85 +1,143 @@
+import inspect
+import asyncio
+import logging
+from datetime import datetime
+from redis import asyncio as aioredis
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.triggers.interval import IntervalTrigger
+
 from app.models.strategy_model import Strategy
 from app.services.strategy_evalutation_services import EvaluteStrategy
-import asyncio
-from redis import asyncio as aioredis
-from datetime import datetime
-
-import logging
 
 logger = logging.getLogger(__name__)
-TIMEFRAMES = ["1m", "5m", "15m"]
 
+TIMEFRAMES = ["1m", "3m", "5m", "15m"]
 REDIS_URL = "redis://localhost:6379"
-redis = None  # global redis instance
+redis = None
 
 
 async def init_redis():
     global redis
     try:
-        logger.info("🔌 Connecting to Redis...")
         redis = aioredis.from_url(REDIS_URL, decode_responses=True)
-        logger.info("Redis connected successfully.")
+        await redis.ping()
+        logger.info("✅ Redis connected successfully.")
     except Exception as e:
-        logger.error(f"❌ Failed to connect to Redis: {e}")
+        logger.warning(f"⚠️ Redis connection failed ({e}). Continuing without Redis.")
+        redis = None
 
 
-# ---------------- Queue ---------------- #
-async def enqueue_strategy(strategy_id, timeframe):
-    key = f"queue:{timeframe}"
-    await redis.rpush(key, str(strategy_id))
-    logger.info(f"{datetime.now()}: Enqueued strategy {strategy_id} to {timeframe} queue")
-
-
-async def worker(timeframe):
-    key = f"queue:{timeframe}"
-    while True:
-        item = await redis.blpop(key, timeout=5)
-        if item:
-            _, strategy_id = item
-            strategy = await Strategy.get(strategy_id)
-            if strategy:
-                result = EvaluteStrategy(strategy ,True)
-
-                print('after result', result)
-
-# ---------------- Initial DB Load ---------------- #
 async def initial_load():
-    """Load existing PENDING strategies from DB into Redis queues"""
-    for tf in TIMEFRAMES:
-        strategies = await Strategy.find(
-            Strategy.status == False,
-            Strategy.timeframe == tf
+    """
+    Enqueue all active (or inactive but schedulable) strategies into Redis queues once at startup.
+    """
+    if not redis:
+        logger.warning("Redis not connected — skipping initial load.")
+        return
+
+    logger.info("⏳ Running initial load: fetching strategies from DB...")
+
+    try:
+        # Get all active or pending strategies (adjust your query condition)
+        all_strategies = await Strategy.find(
+            Strategy.status == False  # or True depending on your logic
         ).to_list()
-        for strat in strategies:
-            await enqueue_strategy(strat.id, tf)
-    logger.info("Initial load completed: PENDING strategies enqueued")
 
-# ---------------- MongoDB Watch ---------------- #
-async def watch_new_strategies():
-    """Watch MongoDB insert and push to Redis queues"""
-    from motor.motor_asyncio import AsyncIOMotorClient
-    from app.core.config import setting
+        if not all_strategies:
+            logger.info("No strategies found for initial load.")
+            return
 
-    client = AsyncIOMotorClient(setting.MONGO_URI)
-    db = client[setting.MONGO_DB]
-    collection = db.strategy
+        for strat in all_strategies:
+            timeframe = getattr(strat, "timeframe", None)
+            if timeframe in TIMEFRAMES:
+                await enqueue_strategy(strat.id, timeframe)
+            else:
+                logger.warning(f"Strategy {strat.id} has invalid timeframe: {timeframe}")
 
-    async with collection.watch([{"$match": {"operationType": "insert"}}]) as stream:
-        async for change in stream:
-            new_strategy = change["fullDocument"]
-            tf = new_strategy.get("timeframe")
-            if tf in TIMEFRAMES:
-                strategy_doc = await Strategy.get(new_strategy["_id"])
-                await enqueue_strategy(strategy_doc.id, tf)
+        logger.info(f"✅ Initial load complete: {len(all_strategies)} strategies enqueued.")
+    except Exception as e:
+        logger.error(f"Initial load error: {e}")
 
-# ---------------- Start Scheduler ---------------- #
+
+async def enqueue_strategy(strategy_id: str, timeframe: str):
+    """
+    Enqueue strategy_id for a given timeframe, but only if it's not already queued.
+    Uses a Redis set for idempotency: queue:set:{tf}
+    """
+    if not redis:
+        logger.warning("Redis not connected — skipping enqueue.")
+        return False
+
+    list_key = f"queue:{timeframe}"
+    set_key = f"queue:set:{timeframe}"
+
+    try:
+        # Try to add to set. SADD returns 1 if newly added, 0 if already present.
+        added = await redis.sadd(set_key, str(strategy_id))
+        if added:
+            # newly added to set -> push to list for processing
+            await redis.rpush(list_key, str(strategy_id))
+            logger.info(f"{datetime.now()}: Enqueued strategy {strategy_id} to {timeframe} queue")
+            return True
+        else:
+            logger.debug(f"{strategy_id} already queued for {timeframe}, skipping enqueue.")
+            return False
+    except Exception as e:
+        logger.error(f"Failed to enqueue {strategy_id} for {timeframe}: {e}")
+        return False
+    
+async def process_queue(timeframe):
+    """
+    Process a batch of strategy evaluations for the given timeframe.
+    If strategy condition is False, re-enqueue it for next round.
+    """
+    if not redis:
+        logger.warning(f"[{timeframe}] Redis not connected — skipping processing.")
+        return
+
+    key = f"queue:{timeframe}"
+    processed = 0
+
+    try:
+        logger.info(f"[{timeframe}] Worker started.")
+        for _ in range(20):
+            strategy_id = await redis.lpop(key)
+            if not strategy_id:
+                break
+
+            strategy = await Strategy.get(strategy_id)
+            if not strategy:
+                logger.warning(f"[{timeframe}] Strategy {strategy_id} not found.")
+                continue
+
+            try:
+                result = await EvaluteStrategy(strategy, True)
+                processed += 1
+                logger.info(f"[{timeframe}] Strategy {strategy_id} evaluated → {result}")
+
+                # 🧠 If not triggered → push back to queue for next evaluation
+                await enqueue_strategy(strategy.id, timeframe)
+
+            except Exception as inner_e:
+                logger.error(f"[{timeframe}] Eval error for {strategy_id}: {inner_e}")
+
+    except Exception as e:
+        logger.error(f"[{timeframe}] Worker error: {e}")
+    finally:
+        logger.info(f"[{timeframe}] Processed {processed} strategies.")
+
+
+# scheduler startup function (unchanged)
 async def start_scheduler():
-    """Start workers for all timeframes + initial DB load + MongoDB watcher"""
     await init_redis()
+    # do not run initial_load here if you prefer queue-only operation.
+    # if you still want initial load (enqueue pending DB strategies once), implement it using enqueue_strategy
     await initial_load()
-    loop = asyncio.get_event_loop()
-    for tf in TIMEFRAMES:
-        loop.create_task(worker(tf))
-    loop.create_task(watch_new_strategies())
-    logger.info("Redis multi-timeframe scheduler started")
 
+    scheduler = AsyncIOScheduler()
+    scheduler.add_job(process_queue, IntervalTrigger(minutes=1), args=["1m"])
+    scheduler.add_job(process_queue, IntervalTrigger(minutes=3), args=["3m"])
+    scheduler.add_job(process_queue, IntervalTrigger(minutes=5), args=["5m"])
+    scheduler.add_job(process_queue, IntervalTrigger(minutes=15), args=["15m"])
+    scheduler.start()
+    logger.info("🚀 APScheduler started successfully.")

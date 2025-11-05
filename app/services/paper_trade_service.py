@@ -27,11 +27,6 @@ async def create_paper_Order(data:dict):
     except Exception as e:
         raise Exception(f'Error:{e}')
 
-
-
-# async def close_paper_trade(id)
-
-
 async def get_all_paper_trades():
     paper_trades = await Paper_Trade.find().to_list()
     return paper_trades
