@@ -7,21 +7,26 @@ from beanie import PydanticObjectId
 from bson import ObjectId
 import asyncio
 import json
-import time
 import logging
+import os
+import sys
+import threading
 
-from app.models.user_model import UserModel
-from app.models.paper_trade_model import Paper_Trade
+# Make app folder visible for imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from models.user_model import UserModel
+from models.paper_trade_model import Paper_Trade
+from db.init_db import init_db  # Add DB initialization
 
 logging.basicConfig(level=logging.INFO)
 
-# -----------------------------
+# ----------------------------------------------------
 # SmartAPI Login + Token Refresh
-# -----------------------------
+# ----------------------------------------------------
 async def login_smartapi():
-    api_key = '7FutccrO'
-    clientCode = 'A556000'
-    pwd = '2911'
+    api_key = "7FutccrO"
+    clientCode = "A556000"
+    pwd = "2911"
     secret_key = "9495dd53-06e5-40cc-978c-bbfb4e895901"
     totp_secret = "2JREMUQNBZJZ62HC5ZWULWS4HE"
 
@@ -33,7 +38,6 @@ async def login_smartapi():
             logger.info("No existing user found — creating new session.")
             totp = pyotp.TOTP(totp_secret).now()
             data = smartApi.generateSession(clientCode, pwd, totp)
-
             if not data.get("status"):
                 raise Exception("SmartAPI login failed")
 
@@ -57,7 +61,6 @@ async def login_smartapi():
             logger.info("New SmartAPI user created.")
             return tokens
 
-        # Try existing tokens
         profile = smartApi.getProfile(user.refreshToken)
         if profile.get("status"):
             logger.info("Existing tokens valid.")
@@ -67,11 +70,9 @@ async def login_smartapi():
                 "feedToken": user.feedToken,
             }
 
-        # Re-login if expired
         logger.info("Token expired — refreshing session.")
         totp = pyotp.TOTP(totp_secret).now()
         data = smartApi.generateSession(clientCode, pwd, totp)
-
         if not data.get("status"):
             raise Exception("SmartAPI re-login failed")
 
@@ -97,15 +98,23 @@ async def is_token_expired(user):
     return (datetime.utcnow() - expiry).total_seconds() > 3600
 
 
-# -----------------------------
-# SL/TP Calculation Background Task
+# ----------------------------------------------------
+# SL/TP Calculation + WebSocket Handling
+# ----------------------------------------------------
 
-# Store main loop reference globally
-MAIN_LOOP = asyncio.get_event_loop()
+# Keep a global event-loop reference so threads can submit tasks to it
+try:
+    
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    MAIN_LOOP = asyncio.get_running_loop()
+except RuntimeError:
+    MAIN_LOOP = asyncio.new_event_loop()
+    asyncio.set_event_loop(MAIN_LOOP)
+
 
 async def calculate_sl_tp(user_id):
     try:
-        # Fetch user
         user = await UserModel.find_one({"_id": PydanticObjectId(user_id)})
         if not user:
             logger.warning("User not found.")
@@ -118,24 +127,26 @@ async def calculate_sl_tp(user_id):
             "clientCode": user.clientCode,
         }
 
-        # Refresh token if expired
         if await is_token_expired(user):
             logger.info("Token expired — refreshing...")
             refreshed = await login_smartapi()
             tokens.update(refreshed)
 
-        # Get open trades
         open_trades = await Paper_Trade.find({"status": "open"}).to_list()
         if not open_trades:
             logger.info("No open trades found.")
             return
 
-        symbols = list({t.symbolCode for t in open_trades})
-        token_list = [{"exchangeType": 1, "tokens": symbols}]
+        # Prepare tokens for subscription
+        token_list = [
+            {
+                "exchangeType": 1,  # NSE
+                "tokens": [str(t.symbolCode) for t in open_trades],
+            }
+        ]
         correlation_id = f"sl_tp_{user_id}"
-        mode = 1
+        mode = 1  # LTP mode
 
-        # Initialize SmartWebSocket
         sws = SmartWebSocketV2(
             tokens["authToken"],
             tokens["apiKey"],
@@ -143,86 +154,84 @@ async def calculate_sl_tp(user_id):
             tokens["feedToken"],
         )
 
-        # -----------------------------
-        # Async tick handler
-        # -----------------------------
-        async def handle_tick(message):
+        def handle_tick(data):
             try:
-                data = json.loads(message)
-                print("data",data)
-                for tick in data.get("data", []):
+                # logger.info(f"Raw Tick: {data}")
+                ticks = data if isinstance(data, list) else [data]
+
+
+                logger.info(f"Raw Tick: {ticks}")
+                for tick in ticks:
                     token = str(tick.get("token"))
-                    ltp = float(tick.get("ltp", 0)) / 100
+                    ltp = float(tick.get("last_traded_price", 0)) / 100
+                    print(f"Token: {token} | LTP: {ltp}")
 
                     for trade in open_trades:
-                        if str(trade.symbolCode) != token:
+                        if str(trade.symbolCode) != token and str(trade.status) != "closed":
                             continue
-
-                        side = trade.action
+                        
+                        ltp = 1525
+                        side = trade.action.upper()
                         sl = float(trade.stop_loss)
                         tp = float(trade.take_profit)
+                        print(f"symbolCode :{trade.symbolCode} sl: {sl} | tP: {tp}")
 
-                        if side.upper() == "BUY":
+                        if side == "BUY":
                             if ltp <= sl:
-                                await trigger_order(trade, "StopLoss", ltp)
+                                print(f"Stop Loss Hit: {token} | {ltp}")
+                                asyncio.run_coroutine_threadsafe(trigger_order(trade, "StopLoss", ltp) , loop)
                             elif ltp >= tp:
-                                await trigger_order(trade, "TargetHit", ltp)
-                        elif side.upper() == "SELL":
+                                print(f"Target Hit: {token} | {ltp}")
+                                asyncio.run_coroutine_threadsafe(trigger_order(trade, "TargetHit", ltp),loop)
+                        elif side == "SELL":
                             if ltp >= sl:
-                                await trigger_order(trade, "StopLoss", ltp)
+                                print(f"Stop Loss Hit: {token} | {ltp}")
+                                asyncio.run(trigger_order(trade, "StopLoss", ltp))
                             elif ltp <= tp:
-                                await trigger_order(trade, "TargetHit", ltp)
+                                print(f"Target Hit: {token} | {ltp}")
+                                asyncio.run(trigger_order(trade, "TargetHit", ltp))
+
             except Exception as e:
                 logger.error(f"Tick error: {e}")
 
-        # -----------------------------
-        # WebSocket event handlers
-        # -----------------------------
         def on_data(wsapp, message):
             try:
-                asyncio.run_coroutine_threadsafe(handle_tick(message), MAIN_LOOP)
-            except RuntimeError as e:
-                logger.error(f"on_data loop error: {e}")
+                data = json.loads(message) if isinstance(message, str) else message
+
+                handle_tick(data)
+            except Exception as e:
+                logger.error(f"on_data error: {e}")
 
         def on_open(wsapp):
-            logger.info("WebSocket connected.")
-            sws.subscribe(correlation_id, mode, token_list)
+            try:
+                logger.info("WebSocket connected — subscribing now.")
+                sws.subscribe(correlation_id, mode, token_list)
+                logger.info(f"Subscribed to tokens: {[t['tokens'] for t in token_list]}")
+            except Exception as e:
+                logger.error(f"Subscription error: {e}")
 
         def on_error(wsapp, error):
             logger.error(f"WebSocket error: {error}")
 
         def on_close(wsapp, close_status_code, close_msg):
-            logger.warning(
-                f"WebSocket closed ({close_status_code}): {close_msg}. Reconnecting in 5 seconds..."
-            )
+            logger.warning(f"WebSocket closed ({close_status_code}): {close_msg}")
 
-            async def reconnect():
-                await asyncio.sleep(5)
-                logger.info("Reconnecting WebSocket...")
-                MAIN_LOOP.run_in_executor(None, sws.connect)
-
-            try:
-                MAIN_LOOP.create_task(reconnect())
-            except RuntimeError:
-                logger.error("Reconnect failed — no running loop")
-
-        # Attach handlers
         sws.on_data = on_data
         sws.on_open = on_open
         sws.on_error = on_error
         sws.on_close = on_close
 
-        # Start WebSocket in background thread
-        MAIN_LOOP.run_in_executor(None, sws.connect)
-        logger.info("WebSocket started in background successfully.")
+        sws.connect()
+        logger.info("WebSocket started in background.")
 
     except Exception as e:
         logger.error(f"calculate_sl_tp error: {e}", exc_info=True)
+        print(f"calculate_sl_tp error: {e}")
 
 
-# -----------------------------
+# ----------------------------------------------------
 # Trigger Trade Close (SL/TP Hit)
-# -----------------------------
+# ----------------------------------------------------
 async def trigger_order(trade, reason, price):
     try:
         entry_price = float(trade.entry_price)
@@ -243,7 +252,21 @@ async def trigger_order(trade, reason, price):
         user = await UserModel.find_one({"_id": ObjectId("6905f6e134e7250e9e8b3389")})
         if user:
             await user.update({"$inc": {"margin": pnl}})
-        logger.info(f"{reason} triggered for {trade.symbolCode} at {price}")
+
+        print(f"{reason} triggered for {trade.symbolCode} at {price} user:{user}")
 
     except Exception as e:
         logger.error(f"Trigger order error: {e}")
+
+
+# ----------------------------------------------------
+# Main Entry Point (Standalone)
+# ----------------------------------------------------
+async def main():
+    await init_db()  # ✅ Initialize MongoDB before using models
+    await calculate_sl_tp("6905f6e134e7250e9e8b3389")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+

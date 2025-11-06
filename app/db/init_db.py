@@ -1,9 +1,16 @@
 from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
-from app.models.strategy_model import Strategy
-from app.models.paper_trade_model import Paper_Trade
-from app.models.user_model import UserModel
-from app.core.config import setting
+import os
+import sys
+
+
+# Make app folder visible for imports
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from models.user_model import UserModel
+from models.strategy_model import Strategy
+from models.paper_trade_model import Paper_Trade
+from models.user_model import UserModel
+# from core.config import setting
 from redis.asyncio import Redis
 import logging
 
@@ -13,8 +20,8 @@ logger = logging.getLogger(__name__)
 async def init_db():
     try:
         logger.info("⏳ Connecting to MongoDB...")
-        client = AsyncIOMotorClient(setting.MONGO_URI)
-        db = client[setting.MONGO_DB]
+        client = AsyncIOMotorClient("mongodb+srv://vishalgarna:vishalgarna%401@cluster0.uxsnu.mongodb.net")
+        db = client["Saas"]
 
         await init_beanie(database=db, document_models=[Strategy , Paper_Trade , UserModel])
         logger.info("✅ MongoDB connection successful!")
