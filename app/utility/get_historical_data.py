@@ -24,11 +24,11 @@ def getIntradayData(symbol: str, interval: str ="1m", period: str = "7d"):
             print(f"❌ No data fetched for {symbol}")
             return None
         
-        # ✅ Flatten MultiIndex columns if present
+        # Flatten MultiIndex columns if present
         if isinstance(data.columns, pd.MultiIndex):
             data.columns = [col[0] for col in data.columns]
 
-        print(f"✅ Data fetched successfully for {symbol}")
+        print(f"Data fetched successfully for {symbol}")
         return data
 
     except Exception as e:
@@ -62,7 +62,7 @@ def getHistoricalData(symbol: str, interval: str ="1d", period: str = "5y"):
         # Convert to Indian timezone
         data.index = data.index.tz_localize('UTC').tz_convert('Asia/Kolkata')
 
-        print(f"✅ Data fetched successfully for {symbol}. Total candles: {len(data)}")
+        print(f"Data fetched successfully for {symbol}. Total candles: {len(data)}")
         return data
 
     except Exception as e:

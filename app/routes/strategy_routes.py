@@ -13,13 +13,25 @@ async def create_strategy_route(data:dict = Body(...)):
         raise HTTPException(status_code=500 , detail = str(e))
 
 
-@router.get('/all-strategy')
+import traceback
+
+@router.get("/all-strategy")
 async def get_all_strategy_route():
     try:
-        strategies = await get_all_strategy()
-        return {"message":'success', "data": strategies}
-    except  Exception as e:
-        raise HTTPException(status_code=500 , detail = str(e))
+        if callable(get_all_strategy) and get_all_strategy.__code__.co_flags & 0x80:
+            strategies = await get_all_strategy()
+        else:
+            strategies = get_all_strategy()
+
+        if not isinstance(strategies, (list, dict)):
+            strategies = str(strategies)
+
+        return {"message": "success", "data": strategies}
+
+    except Exception as e:
+        print("❌ Error in /all-strategy route:", e)
+        traceback.print_exc()  # 🔥 shows full error details
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.put("/update-status")

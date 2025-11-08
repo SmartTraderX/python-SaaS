@@ -7,7 +7,7 @@ import sys
 # Make app folder visible for imports
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from models.user_model import UserModel
-from app.models.strategy_model import Strategy
+from models.strategy_model import Strategy
 from models.paper_trade_model import Paper_Trade
 from models.user_model import UserModel
 # from core.config import setting

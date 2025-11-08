@@ -11,7 +11,7 @@ from app.services.strategy_evalutation_services import EvaluteStrategy
 
 logger = logging.getLogger(__name__)
 
-TIMEFRAMES = ["1m", "3m", "5m", "15m"]
+TIMEFRAMES = ["5m", "15m"]
 REDIS_URL = "redis://localhost:6379"
 redis = None
 
@@ -21,7 +21,7 @@ async def init_redis():
     try:
         redis = aioredis.from_url(REDIS_URL, decode_responses=True)
         await redis.ping()
-        logger.info("✅ Redis connected successfully.")
+        logger.info("Redis connected successfully.")
     except Exception as e:
         logger.warning(f"⚠️ Redis connection failed ({e}). Continuing without Redis.")
         redis = None
@@ -35,7 +35,7 @@ async def initial_load():
         logger.warning("Redis not connected — skipping initial load.")
         return
 
-    logger.info("⏳ Running initial load: fetching strategies from DB...")
+    logger.info("Running initial load: fetching strategies from DB...")
 
     try:
         # Get all active or pending strategies (adjust your query condition)
@@ -54,7 +54,7 @@ async def initial_load():
             else:
                 logger.warning(f"Strategy {strat.id} has invalid timeframe: {timeframe}")
 
-        logger.info(f"✅ Initial load complete: {len(all_strategies)} strategies enqueued.")
+        logger.info(f"Initial load complete: {len(all_strategies)} strategies enqueued.")
     except Exception as e:
         logger.error(f"Initial load error: {e}")
 
@@ -135,9 +135,9 @@ async def start_scheduler():
     await initial_load()
 
     scheduler = AsyncIOScheduler()
-    scheduler.add_job(process_queue, IntervalTrigger(minutes=1), args=["1m"])
-    scheduler.add_job(process_queue, IntervalTrigger(minutes=3), args=["3m"])
+    # scheduler.add_job(process_queue, IntervalTrigger(minutes=1), args=["1m"])
+    # scheduler.add_job(process_queue, IntervalTrigger(minutes=3), args=["3m"])
     scheduler.add_job(process_queue, IntervalTrigger(minutes=5), args=["5m"])
     scheduler.add_job(process_queue, IntervalTrigger(minutes=15), args=["15m"])
     scheduler.start()
-    logger.info("🚀 APScheduler started successfully.")
+    logger.info(" APScheduler started successfully.")

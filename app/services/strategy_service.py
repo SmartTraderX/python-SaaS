@@ -43,5 +43,11 @@ async def   mark_symbol_match(id:str , symbolid:str):
                                                      
      
 async def get_all_strategy():
-    strategies = await Strategy.find().to_list(length=None)  # fetch all
-    return strategies
+    try:
+       strategies = await Strategy.find().to_list(length=None)  # fetch all
+       return strategies
+    except Exception as e:
+       raise Exception(f"Error{str(e)}")
+       
+       
+    

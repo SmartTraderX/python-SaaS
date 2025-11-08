@@ -59,7 +59,7 @@ async def run_feed():
     async with websockets.connect(uri, extra_headers={
         "Authorization": f"Bearer {access_token}"
     }) as ws:
-        print("✅ Connected to Upstox feed")
+        print("Connected to Upstox feed")
 
         tokens = [trade["symbolToken"] async for trade in paper_collection.find({"isClosed": False})]
         if not tokens:

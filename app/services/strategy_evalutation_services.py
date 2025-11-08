@@ -310,9 +310,9 @@ def worker_test(symbolName, strategy, results, lock, paper_Trade, main_loop):
             }
 
             # Schedule async DB insert on main event loop safely
-            # future = asyncio.run_coroutine_threadsafe(create_paper_Order(obj), main_loop)
-            # paper_trade_data = future.result()  # wait until complete
-            # logger.info(f"Paper trade stored: {paper_trade_data}")
+            future = asyncio.run_coroutine_threadsafe(create_paper_Order(obj), main_loop)
+            paper_trade_data = future.result()  # wait until complete
+            logger.info(f"Paper trade stored: {paper_trade_data}")
 
         # Store result in shared dict
         with lock:
@@ -463,7 +463,7 @@ def Backtest_Worker(symbolName, strategy, results, lock):
                 "metrices": metrices,
                 "trades": backtestResults
             })
-            print(f"✅ {symbolName}: Completed with {metrices['total_trades']} trades")
+            print(f"{symbolName}: Completed with {metrices['total_trades']} trades")
 
     except Exception as e:
         # store the error safely
@@ -477,7 +477,7 @@ def Backtest_Worker(symbolName, strategy, results, lock):
         print(f"❌ {symbolName}: Error -> {e}")
 
 def BacktestStrategy(strategy):
-    print("🚀 Backtest started for:", strategy["strategyName"])
+    print(" Backtest started for:", strategy["strategyName"])
     threads = []
     results = []
     lock = threading.Lock()
@@ -493,7 +493,7 @@ def BacktestStrategy(strategy):
     for t in threads:
         t.join()
 
-    print("✅ All threads completed!")
+    print("All threads completed!")
     return results
 
 # Example usage:
