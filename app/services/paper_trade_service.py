@@ -2,7 +2,7 @@ from app.models.paper_trade_model import Paper_Trade
 from app.models.user_model import UserModel
 import logging
 from bson import ObjectId
-logger = logging.getLogger(__name__)
+from app.logger import logger
 
 async def create_paper_Order(data:dict):
     try :

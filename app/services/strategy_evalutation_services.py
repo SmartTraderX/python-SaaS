@@ -14,8 +14,7 @@ from utility.get_historical_data import getIntradayData , getHistoricalData
 from app.services.paper_trade_service import (create_paper_Order)
 from app.services.strategy_service import (mark_symbol_match)
 from app.models.strategy_model import Strategy
-
-logger = logging.getLogger(__name__)
+from app.logger import logger
 
 class NumberNode:
     def __init__(self , value):
@@ -255,8 +254,14 @@ def EvaluteStrategy(strategy, paper_Trade=False):
     # If strategy is a Beanie document, access orderDetails.symbol as list of objects
     symbols = strategy.orderDetails.symbol
 
+    symol_to_process= [sym for sym in symbols if not getattr(sym , "theStrategyMatch", False)]
+
+    if not symol_to_process :
+        logger.info(f"No new symbols left to process for strategy {strategy.strategyName}")
+        return results
+
     # Start a thread per symbol
-    for sym in symbols:
+    for sym in symol_to_process:
         symbolName = sym.name
         symbolid =sym.id
         t = threading.Thread(
