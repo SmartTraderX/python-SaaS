@@ -16,6 +16,64 @@ from app.services.strategy_service import (mark_symbol_match)
 from app.models.strategy_model import Strategy
 from app.logger import logger
 
+def supertrend(data, period=10, multiplier=3):
+    """
+    Calculate SuperTrend Indicator
+    data: DataFrame with columns ['High', 'Low', 'Close']
+    period: ATR period (default 10)
+    multiplier: multiplier for ATR (default 3)
+    """
+
+    high = data['High']
+    low = data['Low']
+    close = data['Close']
+
+    # Step 1: Calculate ATR
+    atr = tb.ATR(high.values, low.values, close.values, timeperiod=period)
+
+    # Step 2: Calculate basic bands
+    hl2 = (high + low) / 2
+    upperband = hl2 + (multiplier * atr)
+    lowerband = hl2 - (multiplier * atr)
+
+    # Step 3: Initialize SuperTrend array
+    supertrend = np.zeros(len(data))
+    final_upperband = np.zeros(len(data))
+    final_lowerband = np.zeros(len(data))
+
+    for i in range(1, len(data)):
+        # upper band
+        if (upperband[i] < final_upperband[i - 1]) or (close[i - 1] > final_upperband[i - 1]):
+            final_upperband[i] = upperband[i]
+        else:
+            final_upperband[i] = final_upperband[i - 1]
+
+        # lower band
+        if (lowerband[i] > final_lowerband[i - 1]) or (close[i - 1] < final_lowerband[i - 1]):
+            final_lowerband[i] = lowerband[i]
+        else:
+            final_lowerband[i] = final_lowerband[i - 1]
+
+        # Supertrend direction
+        if supertrend[i - 1] == final_upperband[i - 1] and close[i] <= final_upperband[i]:
+            supertrend[i] = final_upperband[i]
+        elif supertrend[i - 1] == final_upperband[i - 1] and close[i] > final_upperband[i]:
+            supertrend[i] = final_lowerband[i]
+        elif supertrend[i - 1] == final_lowerband[i - 1] and close[i] >= final_lowerband[i]:
+            supertrend[i] = final_lowerband[i]
+        elif supertrend[i - 1] == final_lowerband[i - 1] and close[i] < final_lowerband[i]:
+            supertrend[i] = final_upperband[i]
+        else:
+            supertrend[i] = hl2[i]
+
+    return pd.DataFrame({
+        'SuperTrend': supertrend,
+        'FinalUpperBand': final_upperband,
+        'FinalLowerBand': final_lowerband,
+        'ATR': atr
+    })
+
+
 class NumberNode:
     def __init__(self , value):
         self.value = value
@@ -78,6 +136,109 @@ class IndicatorNode:
                 signalperiod=self.params.get("signal", 9)
             )
             val = float(signal.iloc[-1])
+        elif self.name.lower() == "stochastic-k":
+            k, d = tb.STOCH(
+                self.data['High'].values,
+                self.data['Low'].values,
+                self.data['Close'].values,
+                fastk_period=self.params.get("fastk_period", 14),
+                slowk_period=self.params.get("slowk_period", 3),
+                slowk_matype=0,
+                slowd_period=self.params.get("slowd_period", 3),
+                slowd_matype=0
+            )
+            val = float(k[-1])
+
+        elif self.name.lower() == "stochastic-d":
+            k, d = tb.STOCH(
+                self.data['High'].values,
+                self.data['Low'].values,
+                self.data['Close'].values,
+                fastk_period=self.params.get("fastk_period", 14),
+                slowk_period=self.params.get("slowk_period", 3),
+                slowk_matype=0,
+                slowd_period=self.params.get("slowd_period", 3),
+                slowd_matype=0
+            )
+            val = float(d[-1])
+
+        elif self.name.lower() == "bollinger-bands-upper":
+            period = int(self.params.get("period", 20))
+            deviation = float(self.params.get("deviation", 2))
+            upper, middle, lower = tb.BBANDS(
+                self.data["Close"].values,
+                timeperiod=period,
+                nbdevup=deviation,
+                nbdevdn=deviation,
+                matype=0  # 0 = simple moving average
+            )
+            val = float(upper[-1])
+
+        elif self.name.lower() == "bollinger-bands-middle":
+            period = int(self.params.get("period", 20))
+            deviation = float(self.params.get("deviation", 2))
+            upper, middle, lower = tb.BBANDS(
+                self.data["Close"].values,
+                timeperiod=period,
+                nbdevup=deviation,
+                nbdevdn=deviation,
+                matype=0
+            )
+            val = float(middle[-1])
+
+        elif self.name.lower() == "bollinger-bands-lower":
+            period = int(self.params.get("period", 20))
+            deviation = float(self.params.get("deviation", 2))
+            upper, middle, lower = tb.BBANDS(
+                self.data["Close"].values,
+                timeperiod=period,
+                nbdevup=deviation,
+                nbdevdn=deviation,
+                matype=0
+            )
+            val = float(lower[-1])
+                # --- ADX (Average Directional Movement Index) ---
+                
+        elif self.name.lower() == "adx":
+            period = int(self.params.get("period", 14))
+            val = float(tb.ADX(
+                self.data["High"].values,
+                self.data["Low"].values,
+                self.data["Close"].values,
+                timeperiod=period
+            )[-1])
+
+        # --- DMI Plus (DI+) ---
+        elif self.name.lower() in ["dmi-plus", "plus-di"]:
+            period = int(self.params.get("period", 14))
+            val = float(tb.PLUS_DI(
+                self.data["High"].values,
+                self.data["Low"].values,
+                self.data["Close"].values,
+                timeperiod=period
+            )[-1])
+
+        # --- DMI Minus (DI-) ---
+        elif self.name.lower() in ["dmi-minus", "minus-di"]:
+            period = int(self.params.get("period", 14))
+            val = float(tb.MINUS_DI(
+                self.data["High"].values,
+                self.data["Low"].values,
+                self.data["Close"].values,
+                timeperiod=period
+            )[-1])
+
+        # --- ATR (Average True Range) ---
+        elif self.name.lower() == "atr":
+            period = int(self.params.get("period", 14))
+            val = float(tb.ATR(
+                self.data["High"].values,
+                self.data["Low"].values,
+                self.data["Close"].values,
+                timeperiod=period
+            )[-1])
+    
+    
 
         # print(f"Evaluating {self.name}: {val}")
         return val
@@ -240,7 +401,7 @@ def worker(symbolName, symbolid, strategy, results, lock, paper_Trade, main_loop
     except Exception as e:
         with lock:
             results[symbolName] = f"Error: {e}"
-        logger.error(f"{symbolName} failed: {e}", exc_info=True)
+        logger.exception(f"Error while evaluating {symbolName} in strategy {strategy.strategyName}: {e}")
 
 
 def EvaluteStrategy(strategy, paper_Trade=False):
@@ -254,14 +415,14 @@ def EvaluteStrategy(strategy, paper_Trade=False):
     # If strategy is a Beanie document, access orderDetails.symbol as list of objects
     symbols = strategy.orderDetails.symbol
 
-    symol_to_process= [sym for sym in symbols if not getattr(sym , "theStrategyMatch", False)]
+    symbols_to_process = [sym for sym in symbols if not getattr(sym, "theStrategyMatch", False)]
 
-    if not symol_to_process :
+    if not symbols_to_process :
         logger.info(f"No new symbols left to process for strategy {strategy.strategyName}")
         return results
 
     # Start a thread per symbol
-    for sym in symol_to_process:
+    for sym in symbols_to_process:
         symbolName = sym.name
         symbolid =sym.id
         t = threading.Thread(
@@ -327,7 +488,7 @@ def worker_test(symbolName, strategy, results, lock, paper_Trade, main_loop):
     except Exception as e:
         with lock:
             results[symbolName] = f"Error: {e}"
-        logger.error(f"{symbolName} failed: {e}", exc_info=True)
+        logger.exception(f"Error while evaluating {symbolName} in strategy {strategy.strategyName}: {e}")
 
 def EvaluteStrategy_Testing(strategy, paper_Trade=False):
     threads = []
@@ -361,7 +522,7 @@ def Backtest_Worker(symbolName, strategy, results, lock):
         print(f"🔹 {symbolName}: Thread started")
 
         condition = strategy['condition']
-        data = getIntradayData(symbolName, interval="1d", period="5y")
+        data = getIntradayData(symbolName, interval="1d")
 
         if data is None or data.empty:
             print(f"⚠️ {symbolName}: No data returned")

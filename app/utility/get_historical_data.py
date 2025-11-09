@@ -5,11 +5,34 @@ def nse_to_yfinance(symbol: str) -> str:
     """Convert NSE symbol to yfinance-compatible ticker."""
     return f"{symbol.upper()}.NS"
 
-def getIntradayData(symbol: str, interval: str ="1m", period: str = "7d"):
+
+timeframes = {
+    "1m": "7d",      # 1-minute data -> max 7 days
+    "2m": "60d",     # 2-minute data -> max 60 days
+    "5m": "60d",     # 5-minute data -> max 60 days
+    "15m": "60d",    # 15-minute data -> max 60 days
+    "1h": "730d",    # 1-hour data -> ~2 years
+    "1d": "5y",      # 1-day data -> 5 years
+}
+
+def get_return_days(interval: str) -> str:
+    """
+    Returns maximum lookback period for given Yahoo Finance interval.
+    Raises ValueError if interval is unsupported.
+    """
+    if interval not in timeframes:
+        raise ValueError(f"Unsupported interval '{interval}'. Choose from: {list(timeframes.keys())}")
+    return timeframes[interval]
+
+
+
+def getIntradayData(symbol: str, interval: str):
     # print(f"Fetching data for: {symbol}")
     
     ticker = nse_to_yfinance(symbol)
+
     # print(ticker)
+    period = get_return_days(interval)
 
     try:
         data = yf.download(

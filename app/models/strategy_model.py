@@ -27,7 +27,7 @@ class Strategy(Document):
     createdBy: Optional[str] = None
     description: Optional[str]
     timeframe: Optional[str]
-    status: bool = False
+    status: bool = True
     condition: Optional[list]
     associatedBroker: Optional[str]=None
     expiryDate: datetime = datetime.now() + timedelta(days=7)

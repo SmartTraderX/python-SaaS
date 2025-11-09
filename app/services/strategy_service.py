@@ -6,15 +6,31 @@ async def create_strategy(data:dict):
     await strategy.insert()
     return strategy
 
-async def update_strategy_status(id:str , status:bool):
-    updated_strategy  = await Strategy.findByIdAndUpdate(id, {
-        "$set" : {"status" : not status}
-    },
-    return_document = True
-    )
-    if not updated_strategy:
-        raise Exception("strategy Not found")
-    return updated_strategy
+async def update_strategy_status(id: str, status: bool):
+    try:
+        # Convert string to PydanticObjectId
+        object_id = PydanticObjectId(id)
+
+        # Toggle or set the new status
+        new_status = not status
+
+        # Perform update directly
+        updated = await Strategy.find_one(Strategy.id == object_id).update(
+            {"$set": {"status": new_status}}
+        )
+
+        if not updated.modified_count:
+            raise Exception("Strategy not found or not updated")
+
+        # Fetch the updated document to return
+        updated_strategy = await Strategy.get(object_id)
+        return updated_strategy
+
+    except Exception as e:
+        raise Exception(f"Error updating strategy: {str(e)}")
+    
+       
+   
                                                      
 async def   mark_symbol_match(id:str , symbolid:str):
     try:
@@ -37,6 +53,7 @@ async def   mark_symbol_match(id:str , symbolid:str):
         print(f"Symmbol is match and mark as true")
 
     except Exception as e:
+      
       raise Exception(f"Error{str(e)}")
     
 

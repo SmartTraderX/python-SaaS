@@ -1,4 +1,4 @@
-from fastapi import APIRouter , HTTPException  , Body
+from fastapi import APIRouter , HTTPException  , Body , Query
 from app.services.strategy_service import (create_strategy ,get_all_strategy  ,update_strategy_status)
 from app.services.strategy_evalutation_services import (BacktestStrategy)
 
@@ -34,14 +34,19 @@ async def get_all_strategy_route():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/update-status")
-async def update_status(id:str , status:bool):
-    try:
-        strategy = await update_strategy_status(id , status)
-        return {"message":'success', "data": strategy}
-    except Exception as e:
-        raise HTTPException(status_code=500 , detail = str(e))
 
+@router.put("/update-status")
+async def update_status(
+    id: str = Query(..., description="Strategy ID from query"),
+    status: bool = Body(..., description="New status in request body")
+):
+    try:
+        strategy = await update_strategy_status(id, status)
+        return {"message": "success", "data": strategy}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+    
 @router.post('/backtest-result')
 async def backtest_result(data:dict = Body(...)):
     try:
