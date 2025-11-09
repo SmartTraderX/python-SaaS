@@ -24,10 +24,8 @@ async def process_queue(timeframe):
     """
     try:
         logger.info(f"[{timeframe}] Worker started.")
-
-        # ✅ Use await and convert to list
-        strategies = await Strategy.find({"timeframe": timeframe}).to_list()
-
+        # Use await and convert to list
+        strategies = await Strategy.find({"timeframe": timeframe , "status":True}).to_list()
         if not strategies:
             logger.info(f"No strategies found for timeframe {timeframe}")
             return
