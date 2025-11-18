@@ -11,28 +11,28 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, ".."))  # One level up
 sys.path.append(project_root)
 from utility.get_historical_data import getIntradayData , getHistoricalData
-from app.services.paper_trade_service import (create_paper_Order)
-from app.services.strategy_service import (mark_symbol_match)
-from app.models.strategy_model import Strategy
-from app.logger import logger
+# from app.services.paper_trade_service import (create_paper_Order)
+# from app.services.strategy_service import (mark_symbol_match)
+# from app.models.strategy_model import Strategy
+# from app.logger import logger
 
 def supertrend(data, period=10, multiplier=3):
     """
     Calculate SuperTrend Indicator
-    data: DataFrame with columns ['High', 'Low', 'Close']
+    data: DataFrame with columns ['low', 'Low', 'Close']
     period: ATR period (default 10)
     multiplier: multiplier for ATR (default 3)
     """
 
-    high = data['High']
+    low = data['low']
     low = data['Low']
     close = data['Close']
 
     # Step 1: Calculate ATR
-    atr = tb.ATR(high.values, low.values, close.values, timeperiod=period)
+    atr = tb.ATR(low.values, low.values, close.values, timeperiod=period)
 
     # Step 2: Calculate basic bands
-    hl2 = (high + low) / 2
+    hl2 = (low + low) / 2
     upperband = hl2 + (multiplier * atr)
     lowerband = hl2 - (multiplier * atr)
 
@@ -73,16 +73,65 @@ def supertrend(data, period=10, multiplier=3):
         'ATR': atr
     })
 
+def volumecheck (data  , type:str ="Buy" ,min_high_vol_candles = 2):
+    volume = data["Volume"]
 
-class NumberNode:
-    def __init__(self , value):
-        self.value = value
-
-    def __repr__(self):
-        return f'Number({self.value})'
+    last5 = volume.iloc[-6:-1]
     
-    def evaluate(self, candle):
-        return float(self.value)
+    average20 = volume.iloc[-21:-1].mean()
+
+    count = (last5.values > average20).sum()
+    # print(f'last5 {last5}')
+    # print(f'cureent {average20}')
+
+    return count > min_high_vol_candles
+
+
+
+def swingHigh(data, isBoolean: bool = False, window: int = 2):
+    if len(data) < window * 2 + 1:
+        print("Data is too short")
+        return None
+
+    # last (2*window+1) candles
+    recent = data.iloc[-(window * 2 + 1):]
+    mid_idx = window
+
+    middle_high = recent["High"].iloc[mid_idx]
+    left_high = recent["High"].iloc[:mid_idx]
+    right_high = recent["High"].iloc[mid_idx + 1:]
+
+    # swing high = middle candle higher than both sides
+    if middle_high > max(left_high) and middle_high > max(right_high):
+        swing_high = middle_high
+        return True if isBoolean else swing_high
+
+    return False if isBoolean else 0
+
+
+def swingLow(data, isBoolean: bool = False, window: int = 2):
+    if len(data) < window * 2 + 1:
+        print("Data is too short")
+        return None
+
+    # last (2*window+1) candles
+    recent = data.iloc[-(window * 2 + 1):]
+    mid_idx = window
+
+    middle_low = recent["Low"].iloc[mid_idx]
+    left_low = recent["Low"].iloc[:mid_idx]
+    right_low = recent["Low"].iloc[mid_idx + 1:]
+
+    # swing low = middle candle lower than both sides
+    if middle_low < min(left_low) and middle_low < min(right_low):
+        swing_low = middle_low
+        # val = float(tb.RSI(data['Close'], timeperiod=14).iloc[-1])
+        # if val < 40 :
+        return True if isBoolean else swing_low
+    
+    return False if isBoolean else 0
+
+
 
 class IndicatorNode:
     def __init__(self , name , params=None , field=None , data = None , timeframe = None):
@@ -117,9 +166,18 @@ class IndicatorNode:
         elif self.name.lower() in ["sma"]:
             period = int( self.params.get("period", 20) if isinstance(self.params, dict) else 20)
             val = float(tb.SMA(self.data['Close'], timeperiod=period).iloc[-1])    
+
+        elif self.name.lower()  == "swing-high":
+            window = int( self.params.get("window", 2) if isinstance(self.params, dict) else 2)
+            val = float(swingHigh(self.data))    
+
+        elif self.name.lower()  == "swing-low":
+            window = int( self.params.get("window", 2) if isinstance(self.params, dict) else 2)
+            val = float(swingLow(self.data))    
+  
         elif self.name.lower() in ["sma-volume"]:
             period = int(self.params.get("period", 20) if isinstance(self.params, dict) else 20)
-            val = float(tb.SMA(self.data['Volume'], timeperiod=period).iloc[-1])
+            val = float(tb.SMA(self.data['Volume'], timeperiod=period).iloc[-1]) *1.5
         elif self.name.lower() == "macd-macd":
             macd, signal, hist = tb.MACD(
                 self.data['Close'],
@@ -138,7 +196,7 @@ class IndicatorNode:
             val = float(signal.iloc[-1])
         elif self.name.lower() == "stochastic-k":
             k, d = tb.STOCH(
-                self.data['High'].values,
+                self.data['Low'].values,
                 self.data['Low'].values,
                 self.data['Close'].values,
                 fastk_period=self.params.get("fastk_period", 14),
@@ -151,7 +209,7 @@ class IndicatorNode:
 
         elif self.name.lower() == "stochastic-d":
             k, d = tb.STOCH(
-                self.data['High'].values,
+                self.data['Low'].values,
                 self.data['Low'].values,
                 self.data['Close'].values,
                 fastk_period=self.params.get("fastk_period", 14),
@@ -202,7 +260,7 @@ class IndicatorNode:
         elif self.name.lower() == "adx":
             period = int(self.params.get("period", 14))
             val = float(tb.ADX(
-                self.data["High"].values,
+                self.data["Low"].values,
                 self.data["Low"].values,
                 self.data["Close"].values,
                 timeperiod=period
@@ -212,7 +270,7 @@ class IndicatorNode:
         elif self.name.lower() in ["dmi-plus", "plus-di"]:
             period = int(self.params.get("period", 14))
             val = float(tb.PLUS_DI(
-                self.data["High"].values,
+                self.data["Low"].values,
                 self.data["Low"].values,
                 self.data["Close"].values,
                 timeperiod=period
@@ -222,7 +280,7 @@ class IndicatorNode:
         elif self.name.lower() in ["dmi-minus", "minus-di"]:
             period = int(self.params.get("period", 14))
             val = float(tb.MINUS_DI(
-                self.data["High"].values,
+                self.data["Low"].values,
                 self.data["Low"].values,
                 self.data["Close"].values,
                 timeperiod=period
@@ -232,7 +290,7 @@ class IndicatorNode:
         elif self.name.lower() == "atr":
             period = int(self.params.get("period", 14))
             val = float(tb.ATR(
-                self.data["High"].values,
+                self.data["Low"].values,
                 self.data["Low"].values,
                 self.data["Close"].values,
                 timeperiod=period
@@ -264,8 +322,9 @@ class ComparatorNode:
     def evaluate(self):
         left_val = self.left.evaluate()
         right_val = self.right.evaluate()
-        # print('left',left_val)
-        # print('right',right_val)
+        print('left',left_val)
+        print('op',self.op)
+        print('right',right_val)
         return self.OPS[self.op](left_val, right_val)
 
 class LogicalNode:
@@ -280,9 +339,11 @@ class LogicalNode:
     def evaluate(self):
 
         if self.op == "AND":
-            # print(f'print-left {self.left} print-e=rigth ,)
-            # print('print-right',self.right)
-            return self.left.evaluate() and self.right.evaluate()
+            print(f'print-left {self.left} print-e=rigth {self.op} , right{self.right}')
+           
+            result= self.left.evaluate() and self.right.evaluate()
+            print( "result",result)
+            return result
         elif self.op == "OR":
             return self.left.evaluate() or self.right.evaluate()
         else:
@@ -349,34 +410,49 @@ def parsedCondition(conditions ,data):
 
     return result        
 
-
 def worker(symbolName, symbolid, strategy, results, lock, paper_Trade, main_loop):
     """
-    Worker function for evaluating a strategy and optionally creating a paper trade.
-    main_loop: the asyncio event loop from the main thread
+    Evaluates strategy conditions + swing structure for each symbol,
+    and creates paper orders accordingly.
     """
     try:
-        # Extract strategy info
         timeframe = strategy.timeframe
         condition = strategy.condition
 
-        # Get intraday data
+        # 🔹 Get intraday data
         data = getIntradayData(symbolName, timeframe)
+        if data is None or data.empty:
+            logger.warning(f"[{symbolName}] No data fetched")
+            with lock:
+                results[symbolName] = {"error": "No data"}
+            return
 
-        # Evaluate condition
+        # 🔍 Always check swing structure
+        isSwingHigh = swingHigh(data, True)
+        isSwingLow = swingLow(data, True)
+
+        # 🔸 Evaluate strategy condition
         result = parsedCondition(condition, data).evaluate()
-        logger.info(f"[{symbolName}] Condition result: {result}")
+        logger.info(f"[{symbolName}] Condition={result}, SwingHigh={isSwingHigh}, SwingLow={isSwingLow}")
 
-        # If result is True and paper trade enabled
-        if result and paper_Trade and not data.empty:
-            entry_price = data['Close'].iloc[-1]
+        # 📊 Store intermediate results for analysis
+        with lock:
+            results[symbolName] = {
+                "condition": result,
+                "swingHigh": isSwingHigh,
+                "swingLow": isSwingLow,
+            }
+
+        # 🧾 Helper for creating async paper trades
+        def create_paper_trade(action):
+            entry_price = data["Close"].iloc[-1]
             currentTime = data.index[-1]
-            sl = entry_price * (1 - 2 / 100)
-            tp = entry_price * (1 + 5 / 100)
+            sl = entry_price * (1 - 0.02) if action == "BUY" else entry_price * (1 + 0.02)
+            tp = entry_price * (1 + 0.05) if action == "BUY" else entry_price * (1 - 0.05)
 
             obj = {
                 "symbol": symbolName,
-                "action": "BUY",
+                "action": action,
                 "quantity": 500,
                 "entry_price": entry_price,
                 "stop_loss": sl,
@@ -385,24 +461,28 @@ def worker(symbolName, symbolid, strategy, results, lock, paper_Trade, main_loop
                 "strategyId": str(strategy.id),
             }
 
-            # Schedule async DB insert on main event loop safely
             future = asyncio.run_coroutine_threadsafe(create_paper_Order(obj), main_loop)
-            paper_trade_data = future.result()  # Wait for completion
-            logger.info(f"Paper trade stored: {paper_trade_data}")
-
-            # Mark matched symbol asynchronously
+            paper_trade_data = future.result()
+            logger.info(f"[{symbolName}] Paper trade stored: {paper_trade_data}")
             asyncio.run_coroutine_threadsafe(mark_symbol_match(strategy.id, symbolid), main_loop)
 
-        # Store result in shared dict
-        with lock:
-            results[symbolName] = result
-            logger.info(f"[{symbolName}] Done")
+        # 🟢 Swing-based signals (independent from condition)
+        if paper_Trade and not data.empty:
+            if isSwingHigh:
+                create_paper_trade("SELL")
+            elif isSwingLow:
+                create_paper_trade("BUY")
+
+        # 🔵 Condition-based signal (main strategy)
+        if result and paper_Trade and not data.empty:
+            create_paper_trade("BUY")
+
+        logger.info(f"[{symbolName}] Worker completed successfully.")
 
     except Exception as e:
         with lock:
-            results[symbolName] = f"Error: {e}"
+            results[symbolName] = {"error": str(e)}
         logger.exception(f"Error while evaluating {symbolName} in strategy {strategy.strategyName}: {e}")
-
 
 def EvaluteStrategy(strategy, paper_Trade=False):
     threads = []
@@ -438,56 +518,126 @@ def EvaluteStrategy(strategy, paper_Trade=False):
 
     return results
 
-
-
 def worker_test(symbolName, strategy, results, lock, paper_Trade, main_loop):
     """
     Worker function for evaluating a strategy and optionally creating a paper trade.
     main_loop: the asyncio event loop from the main thread
     """
+    # try:
+    #     # Extract strategy info
+    #     timeframe = strategy["timeframe"]
+    #     condition = strategy["condition"]
+
+    #     # Get intraday data
+    #     data = getIntradayData(symbolName, timeframe)
+
+    #     # Evaluate condition
+    #     result = parsedCondition(condition, data).evaluate()
+    #     logger.info(f"[{symbolName}] Condition result: {result}")
+
+    #     # If result is True and paper trade enabled
+    #     if result and paper_Trade and not data.empty:
+    #         entry_price = data['Close'].iloc[-1]
+    #         currentTime = data.index[-1]
+    #         sl = entry_price * (1 - 2 / 100)
+    #         tp = entry_price * (1 + 5 / 100)
+
+    #         obj = {
+    #             "symbol": symbolName,
+    #             "action": "BUY",
+    #             "quantity": 1,
+    #             "entry_price": entry_price,
+    #             "stop_loss": sl,
+    #             "take_profit": tp,
+    #             "signal_time":currentTime,
+    #             "strategyId": str(strategy.id),
+    #         }
+
+    #         # Schedule async DB insert on main event loop safely
+    #         future = asyncio.run_coroutine_threadsafe(create_paper_Order(obj), main_loop)
+    #         paper_trade_data = future.result()  # wait until complete
+    #         logger.info(f"Paper trade stored: {paper_trade_data}")
+
+    #     # Store result in shared dict
+    #     with lock:
+    #         results[symbolName] = result
+    #         logger.info(f"[{symbolName}] Done")
+
+    # except Exception as e:
+    #     with lock:
+    #         results[symbolName] = f"Error: {e}"
+    #     logger.exception(f"Error while evaluating {symbolName} in strategy {strategy.strategyName}: {e}")
+    """
+    Evaluates strategy conditions + swing structure for each symbol,
+    and creates paper orders accordingly.
+    """
     try:
-        # Extract strategy info
         timeframe = strategy["timeframe"]
         condition = strategy["condition"]
 
-        # Get intraday data
+        # 🔹 Get intraday data
         data = getIntradayData(symbolName, timeframe)
+        if data is None or data.empty:
+            logger.warning(f"[{symbolName}] No data fetched")
+            with lock:
+                results[symbolName] = {"error": "No data"}
+            return
 
-        # Evaluate condition
+        # 🔍 Always check swing structure
+        isSwingHigh = swingHigh(data, True)
+        isSwingLow = swingLow(data, True)
+
+        # 🔸 Evaluate strategy condition
         result = parsedCondition(condition, data).evaluate()
-        logger.info(f"[{symbolName}] Condition result: {result}")
+        logger.info(f"[{symbolName}] Condition={result}, SwingHigh={isSwingHigh}, SwingLow={isSwingLow}")
 
-        # If result is True and paper trade enabled
-        if result and paper_Trade and not data.empty:
-            entry_price = data['Close'].iloc[-1]
+        # 📊 Store intermediate results for analysis
+        with lock:
+            results[symbolName] = {
+                "condition": result,
+                "swingHigh": isSwingHigh,
+                "swingLow": isSwingLow,
+            }
+
+        # 🧾 Helper for creating async paper trades
+        def create_paper_trade(action):
+            entry_price = data["Close"].iloc[-1]
             currentTime = data.index[-1]
-            sl = entry_price * (1 - 2 / 100)
-            tp = entry_price * (1 + 5 / 100)
+            sl = entry_price * (1 - 0.02) if action == "BUY" else entry_price * (1 + 0.02)
+            tp = entry_price * (1 + 0.05) if action == "BUY" else entry_price * (1 - 0.05)
 
             obj = {
                 "symbol": symbolName,
-                "action": "BUY",
-                "quantity": 1,
+                "action": action,
+                "quantity": 500,
                 "entry_price": entry_price,
                 "stop_loss": sl,
                 "take_profit": tp,
-                "signal_time":currentTime,
+                "signal_time": currentTime,
                 "strategyId": str(strategy.id),
             }
 
-            # Schedule async DB insert on main event loop safely
             future = asyncio.run_coroutine_threadsafe(create_paper_Order(obj), main_loop)
-            paper_trade_data = future.result()  # wait until complete
-            logger.info(f"Paper trade stored: {paper_trade_data}")
+            paper_trade_data = future.result()
+            logger.info(f"[{symbolName}] Paper trade stored: {paper_trade_data}")
+            asyncio.run_coroutine_threadsafe(mark_symbol_match(strategy.id, symbolid), main_loop)
 
-        # Store result in shared dict
-        with lock:
-            results[symbolName] = result
-            logger.info(f"[{symbolName}] Done")
+        # 🟢 Swing-based signals (independent from condition)
+        if paper_Trade and not data.empty:
+            if isSwingHigh:
+                create_paper_trade("SELL")
+            elif isSwingLow:
+                create_paper_trade("BUY")
+
+        # 🔵 Condition-based signal (main strategy)
+        if result and paper_Trade and not data.empty:
+            create_paper_trade("BUY")
+
+        logger.info(f"[{symbolName}] Worker completed successfully.")
 
     except Exception as e:
         with lock:
-            results[symbolName] = f"Error: {e}"
+            results[symbolName] = {"error": str(e)}
         logger.exception(f"Error while evaluating {symbolName} in strategy {strategy.strategyName}: {e}")
 
 def EvaluteStrategy_Testing(strategy, paper_Trade=False):
@@ -521,8 +671,10 @@ def Backtest_Worker(symbolName, strategy, results, lock):
     try:
         print(f"🔹 {symbolName}: Thread started")
 
-        condition = strategy['condition']
-        data = getIntradayData(symbolName, interval="1d")
+        condition = strategy["condition"]
+        timeframe = strategy["timeframe"]
+        data = getIntradayData(symbolName , timeframe)
+        print("data", data)
 
         if data is None or data.empty:
             print(f"⚠️ {symbolName}: No data returned")
@@ -568,7 +720,7 @@ def Backtest_Worker(symbolName, strategy, results, lock):
             # print('signal ', signal)
             
             if signal and position is None:
-                atr = tb.ATR(newData['High'], newData['Low'], newData['Close'], timeperiod=14).iloc[-1]
+                atr = tb.ATR(newData['low'], newData['Low'], newData['Close'], timeperiod=14).iloc[-1]
                 entry_price = close_price
                 entry_time = currentTime
                 sl_price = entry_price - atr * 1.5
@@ -585,9 +737,8 @@ def Backtest_Worker(symbolName, strategy, results, lock):
             # EXIT condition
             elif position is not None:
                 last_price = close_price
-                high = newData['High'].iloc[-1]
                 low = newData['Low'].iloc[-1]
-                if high >= position['tp_price']:
+                if low >= position['tp_price']:
                     position["exit_price"] = last_price
                     position["exit_time"] = currentTime
                     position["exit_reason"] = "TP Hit"
@@ -662,6 +813,210 @@ def BacktestStrategy(strategy):
     print("All threads completed!")
     return results
 
+
+def Backtest_Worker_Testing(symbolName, strategy, results, lock):
+    try:
+        print(f"🔹 {symbolName}: Thread started")
+
+        timeframe = strategy['timeframe']
+        data = getIntradayData(symbolName, timeframe)
+
+        if data is None or data.empty:
+            print(f"⚠️ {symbolName}: No data returned")
+            with lock:
+                results.append({
+                    "symbol": symbolName,
+                    "error": "No data returned",
+                    "metrices": {},
+                    "trades": []
+                })
+            return
+
+        position = None
+        backtestResults = []
+        winning_pnl = 0
+        winning_trades = 0
+        losing_trades = 0
+        losing_pnl = 0
+        start_index = 50  # enough candles for indicators
+        signal_count = []
+        count = 0
+
+
+        for idx in range(start_index, len(data)):
+            newData = data.iloc[:idx]
+            close_price = newData['Close'].iloc[-1]
+            currentTime = data.index[idx]
+
+            # --- Condition Evaluation ---
+            signal = False
+            try:
+                swing_high_value = swingLow(newData)
+                # print(swing_high_value)
+                val = float(tb.RSI(newData['Close'], timeperiod=14).iloc[-1])
+                sma_20 = float(tb.SMA(newData['Close'], timeperiod=20).iloc[-1])
+                sma_50 = float(tb.SMA(newData['Close'], timeperiod=50).iloc[-1])
+                sma_200 = float(tb.SMA(newData['Close'], timeperiod=200).iloc[-1])
+                current_open = newData['Open'].iloc[-1]
+                current_close = newData['Close'].iloc[-1]
+                high = newData['High'].iloc[-1]
+                low = newData['Low'].iloc[-1]
+                open = newData['Open'].iloc[-1]
+                close = newData['Close'].iloc[-1]
+
+                body = abs(close - open)
+                full = high - low
+
+                is_strong_body = body >= (0.5 * full)
+                ok_volume = volumecheck(data)
+
+                if( 
+                    swing_high_value and swing_high_value != 0 
+                    and is_strong_body 
+                    and sma_20 > sma_50
+                    and sma_50 > sma_200
+                    and val >50
+                    and ok_volume
+                    and is_strong_body
+                ):
+                    signal = True
+                    # obj = {
+                    #     # "data":currentTime,
+                    #     "count" : count+1
+                    # }
+                    count += 1
+                    # signal_count.append(obj)
+            except Exception as cond_err:
+                print(f"⚠️ {symbolName}: Condition evaluation error -> {cond_err}")
+
+            # --- ENTRY ---
+
+            # print(f"sinal{signal} , pos {position}")
+ 
+            
+            if signal and position is None:
+                atr = float(tb.ATR(newData['High'], newData['Low'], newData['Close'], timeperiod=14).iloc[-1])
+                entry_price = close_price
+                entry_time = currentTime
+                sl_buffer = 1
+                sl_price = swing_high_value - 5
+                # TP = entry price ka 2% upar
+                tp_price = entry_price +10# fixed 10 point target
+
+                position = {
+                    "type": "BUY",
+                    "entry_price": entry_price,
+                    "entry_time": str(entry_time),
+                    "sl_price": sl_price,
+                    "tp_price": tp_price
+                }
+
+            # --- EXIT ---
+            elif position is not None:
+                high = newData['High'].iloc[-1]
+                low = newData['Low'].iloc[-1]
+
+                if position["type"] == "BUY":
+                    if high >= position['tp_price']:
+                        position.update({
+                            "exit_price": close_price,
+                            "exit_time": str(currentTime),
+                            "exit_reason": "TP Hit",
+                            "pnl": round(position['tp_price'] - position['entry_price'], 2)
+                        })
+                        backtestResults.append(position)
+                        winning_pnl += position['tp_price'] - position['entry_price']
+                        winning_trades += 1
+                        position = None
+
+                    elif low <= position['sl_price']:
+                        position.update({
+                            "exit_price": close_price,
+                            "exit_time": str(currentTime),
+                            "exit_reason": "SL Hit",
+                            "pnl": round(position['sl_price'] - position['entry_price'], 2)
+                        })
+                        backtestResults.append(position)
+                        losing_pnl += position['sl_price'] - position['entry_price']
+                        losing_trades += 1
+                        position = None
+
+                elif position["type"] == "SELL":
+
+                    if low >= position['tp_price']:
+                        position.update({
+                            "exit_price": close_price,
+                            "exit_time": str(currentTime),
+                            "exit_reason": "TP Hit",
+                            "pnl": round(position['tp_price'] - position['entry_price'], 2)
+                        })
+                        backtestResults.append(position)
+                        winning_pnl += position['tp_price'] - position['entry_price']
+                        winning_trades += 1
+                        position = None
+
+                    elif low <= position['sl_price']:
+                        position.update({
+                            "exit_price": close_price,
+                            "exit_time": str(currentTime),
+                            "exit_reason": "SL Hit",
+                            "pnl": round(position['sl_price'] - position['entry_price'], 2)
+                        })
+                        backtestResults.append(position)
+                        losing_pnl += position['sl_price'] - position['entry_price']
+                        losing_trades += 1
+                        position = None        
+
+        # --- METRICS ---
+        metrices = {
+            "total_trades": len(backtestResults),
+            "sinal_count" : count,
+            "winning_trades": winning_trades,
+            "losing_trades": losing_trades,
+            "winning_pnl": round(winning_pnl, 2),
+            "losing_pnl": round(losing_pnl, 2),
+            "total_pnl": round(winning_pnl + losing_pnl, 2),
+            "win_rate": round((winning_trades / len(backtestResults) * 100), 2) if backtestResults else 0.0
+        }
+
+        # --- STORE SAFE ---
+        with lock:
+            results.append({
+                "symbol": symbolName,
+                "metrices": metrices,
+                "trades": backtestResults  # full JSON objects
+            })
+        print(f"{symbolName}: Completed with {metrices['total_trades']} trades")
+
+    except Exception as e:
+        with lock:
+            results.append({
+                "symbol": symbolName,
+                "error": str(e),
+                "metrices": {},
+                "trades": []
+            })
+        print(f"❌ {symbolName}: Error -> {e}")
+
+def BacktestStrategy_Testing(strategy):
+    print(" Backtest started for:", strategy["strategyName"])
+    threads = []
+    results = []
+    lock = threading.Lock()
+
+    symbols = strategy['orderDetails']['symbol']
+
+    for sym in symbols:
+        symbolName = sym['name']
+        t = threading.Thread(target=Backtest_Worker_Testing, args=(symbolName, strategy, results, lock))
+        t.start()
+        threads.append(t)
+
+    for t in threads:
+        t.join()
+
+    print("All threads completed!")
+    return results
 # Example usage:
 strategy = {
   "_id": "690767bade68b5e0109817c1",
@@ -669,7 +1024,7 @@ strategy = {
   "strategyName": "Testing strategy",
   "category": "Swing",
   "description": "testing ",
-  "timeframe": "15m",
+  "timeframe": "5m",
   "status": False,
   "associatedBroker": None,
   "createdBy": None,
@@ -715,7 +1070,7 @@ strategy = {
     {
       "name": "value",
       "type": "indicator",
-      "params": { "value": 50 }
+      "params": { "value": 40 }
     },
     {
       "name": "And",
@@ -747,18 +1102,30 @@ strategy = {
   "orderDetails": {
     "action": "BUY",
     "symbol": [
-      {
+    #     {
+    #     "id": "690767bade68b5e0109817bf",
+    #     "name": "RELIANCE",
+    #     "theStrategyMatch": False,
+    #     "symbolCode": "3045"
+    #   },
+    #   {
+    #     "id": "690767bade68b5e0109817bf",
+    #     "name": "TCS",
+    #     "theStrategyMatch": False,
+    #     "symbolCode": "3045"
+    #   },
+        {
         "id": "690767bade68b5e0109817bf",
         "name": "SBIN",
         "theStrategyMatch": False,
         "symbolCode": "3045"
       },
-      {
-        "id": "690767bade68b5e0109817c0",
-        "name": "RELIANCE",
-        "theStrategyMatch": False,
-        "symbolCode": "2885"
-      }
+    #   {
+    #     "id": "690767bade68b5e0109817c0",
+    #     "name": "RELIANCE",
+    #     "theStrategyMatch": False,
+    #     "symbolCode": "2885"
+    #   }
     ]
   },
   "tags": [],
@@ -766,6 +1133,24 @@ strategy = {
 }
 
 
+def saveInJson(results):
+    import json
+    with open("result.json","w") as f:
+        json.dump({"results":results},f ,indent=4)
+        print("save succesfully")
 
-# results = BacktestStrategy(strategy)
-# print("Backtest results:", results)
+
+
+if __name__ == "__main__":
+
+    import asyncio
+
+    
+    results = BacktestStrategy_Testing(strategy)
+    saveInJson(results)
+
+    # data = getIntradayData("SBIN" , "15m")
+
+    # result = volumecheck(data)
+
+    # print(result)

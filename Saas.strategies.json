@@ -1,0 +1,379 @@
+[
+  
+  {
+  "_id": {
+    "$oid": "6907972445d64d96b7405048"
+  },
+  "userId": null,
+  "strategyName": "test-1",
+  "category": "Swing",
+  "createdBy": null,
+  "description": "test-1",
+  "timeframe": "5m",
+  "status": true,
+  "condition": [
+    {
+      "name": "SMA",
+      "type": "indicator",
+      "category": "trend",
+      "orderType": "value",
+      "params": {
+        "period": "50"
+      },
+      "sourceAllowed": true
+    },
+    {
+      "name": ">",
+      "type": "condition"
+    },
+    {
+      "name": "SMA",
+      "type": "indicator",
+      "category": "trend",
+      "orderType": "value",
+      "params": {
+        "period": "200"
+      },
+      "sourceAllowed": true
+    },
+    {
+      "type": "logicalOperator",
+      "name": "And"
+    },
+    {
+      "name": "RSI",
+      "type": "indicator",
+      "category": "momentum",
+      "orderType": "value",
+      "params": {
+        "period": 14
+      },
+      "sourceAllowed": true
+    },
+    {
+      "name": "<",
+      "type": "condition"
+    },
+    {
+      "params": {
+        "value": "40"
+      },
+      "name": "value",
+      "type": "indicator"
+    },
+    {
+      "type": "logicalOperator",
+      "name": "And"
+    },
+    {
+      "name": "MACD-macd",
+      "type": "indicator",
+      "category": "momentum",
+      "orderType": "multi-line",
+      "params": {
+        "fast": 12,
+        "slow": 26,
+        "signal": 9
+      },
+      "lines": [
+        "macd",
+        "signal",
+        "histogram"
+      ],
+      "sourceAllowed": true
+    },
+    {
+      "name": ">",
+      "type": "condition"
+    },
+    {
+      "name": "MACD-signal",
+      "type": "indicator",
+      "category": "momentum",
+      "orderType": "multi-line",
+      "params": {
+        "fast": 12,
+        "slow": 26,
+        "signal": 9
+      },
+      "lines": [
+        "macd",
+        "signal",
+        "histogram"
+      ],
+      "sourceAllowed": true
+    }
+  ],
+  "associatedBroker": null,
+  "expiryDate": {
+    "$date": "2025-11-09T22:59:12.831Z"
+  },
+  "orderDetails": {
+    "action": "BUY",
+    "symbol": [
+      {
+        "id": {
+          "$oid": "6907972445d64d96b7405047"
+        },
+        "name": "RELIANCE",
+        "theStrategyMatch": false,
+        "symbolCode": "2885"
+      }
+    ],
+    "orderType": "",
+    "quantity": 1,
+    "SL": "1",
+    "TP": "5"
+  },
+  "totalSubscriber": [],
+  "tags": [],
+  "createdAt": {
+    "$date": "2025-11-02T22:59:12.831Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "690d8943166134dc75f77434"
+  },
+  "userId": null,
+  "strategyName": "test2 ",
+  "category": "High Frequency",
+  "createdBy": null,
+  "description": "tes",
+  "timeframe": "5m",
+  "status": true,
+  "condition": [
+    {
+      "name": "SMA",
+      "type": "indicator",
+      "category": "trend",
+      "orderType": "value",
+      "params": {
+        "period": "50"
+      },
+      "sourceAllowed": true
+    },
+    {
+      "name": ">",
+      "type": "condition"
+    },
+    {
+      "name": "SMA",
+      "type": "indicator",
+      "category": "trend",
+      "orderType": "value",
+      "params": {
+        "period": "200"
+      },
+      "sourceAllowed": true
+    },
+    {
+      "type": "logicalOperator",
+      "name": "And"
+    },
+    {
+      "name": "RSI",
+      "type": "indicator",
+      "category": "momentum",
+      "orderType": "value",
+      "params": {
+        "period": 14
+      },
+      "sourceAllowed": true
+    },
+    {
+      "name": "<",
+      "type": "condition"
+    },
+    {
+      "params": {
+        "value": "35"
+      },
+      "name": "value",
+      "type": "indicator"
+    },
+    {
+      "type": "logicalOperator",
+      "name": "And"
+    },
+    {
+      "name": "MACD-macd",
+      "type": "indicator",
+      "category": "momentum",
+      "orderType": "multi-line",
+      "params": {
+        "fast": 12,
+        "slow": 26,
+        "signal": 9
+      },
+      "lines": [
+        "macd",
+        "signal",
+        "histogram"
+      ],
+      "sourceAllowed": true
+    },
+    {
+      "name": ">",
+      "type": "condition"
+    },
+    {
+      "name": "MACD-signal",
+      "type": "indicator",
+      "category": "momentum",
+      "orderType": "multi-line",
+      "params": {
+        "fast": 12,
+        "slow": 26,
+        "signal": 9
+      },
+      "lines": [
+        "macd",
+        "signal",
+        "histogram"
+      ],
+      "sourceAllowed": true
+    }
+  ],
+  "associatedBroker": null,
+  "expiryDate": {
+    "$date": "2025-11-14T11:22:47.351Z"
+  },
+  "orderDetails": {
+    "action": "",
+    "symbol": [
+      {
+        "id": {
+          "$oid": "690d8943166134dc75f77432"
+        },
+        "name": "SBIN",
+        "theStrategyMatch": false,
+        "symbolCode": "3045"
+      },
+      {
+        "id": {
+          "$oid": "690d8943166134dc75f77433"
+        },
+        "name": "RELIANCE",
+        "theStrategyMatch": false,
+        "symbolCode": "2885"
+      }
+    ],
+    "orderType": "Intraday",
+    "quantity": 2,
+    "SL": "2",
+    "TP": "5"
+  },
+  "totalSubscriber": [],
+  "tags": [],
+  "createdAt": {
+    "$date": "2025-11-07T11:22:47.351Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "69106015f4d8a2912b8b3628"
+  },
+  "userId": null,
+  "strategyName": "Momentum shift",
+  "category": "",
+  "createdBy": null,
+  "description": "testing",
+  "timeframe": "1h",
+  "status": true,
+  "condition": [
+    {
+      "name": "RSI",
+      "type": "indicator",
+      "category": "momentum",
+      "orderType": "value",
+      "params": {
+        "period": 14
+      },
+      "sourceAllowed": true
+    },
+    {
+      "name": ">",
+      "type": "condition"
+    },
+    {
+      "params": {
+        "value": "50"
+      },
+      "name": "value",
+      "type": "indicator"
+    },
+    {
+      "type": "logicalOperator",
+      "name": "And"
+    },
+    {
+      "name": "Stochastic-k",
+      "type": "indicator",
+      "category": "momentum",
+      "orderType": "multi-line",
+      "params": {
+        "k": 14,
+        "d": 3
+      },
+      "lines": [
+        "k",
+        "d"
+      ],
+      "sourceAllowed": true
+    },
+    {
+      "name": ">",
+      "type": "condition"
+    },
+    {
+      "name": "Stochastic-d",
+      "type": "indicator",
+      "category": "momentum",
+      "orderType": "multi-line",
+      "params": {
+        "k": 14,
+        "d": 3
+      },
+      "lines": [
+        "k",
+        "d"
+      ],
+      "sourceAllowed": true
+    }
+  ],
+  "associatedBroker": null,
+  "expiryDate": {
+    "$date": "2025-11-16T15:02:56.489Z"
+  },
+  "orderDetails": {
+    "action": "BUY",
+    "symbol": [
+      {
+        "id": {
+          "$oid": "69106015f4d8a2912b8b3626"
+        },
+        "name": "SBIN",
+        "theStrategyMatch": false,
+        "symbolCode": "3045"
+      },
+      {
+        "id": {
+          "$oid": "69106015f4d8a2912b8b3627"
+        },
+        "name": "RELIANCE",
+        "theStrategyMatch": false,
+        "symbolCode": "2885"
+      }
+    ],
+    "orderType": "Intraday",
+    "quantity": 1,
+    "SL": "2",
+    "TP": "5"
+  },
+  "totalSubscriber": [],
+  "tags": [],
+  "createdAt": {
+    "$date": "2025-11-09T15:02:56.489Z"
+  }
+}]

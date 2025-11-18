@@ -324,6 +324,7 @@ async def login_smartapi():
                 "authToken": user.authToken,
                 "refreshToken": user.refreshToken,
                 "feedToken": user.feedToken,
+                "obj" : smartApi
             }
 
         logger.info("Token expired — refreshing session.")
@@ -342,6 +343,7 @@ async def login_smartapi():
             "authToken": user.authToken,
             "refreshToken": user.refreshToken,
             "feedToken": user.feedToken,
+            "obj":smartApi
         }
 
     except Exception as e:
