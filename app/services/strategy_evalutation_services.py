@@ -73,19 +73,24 @@ def supertrend(data, period=10, multiplier=3):
         'ATR': atr
     })
 
-def volumecheck (data  , type:str ="Buy" ,min_high_vol_candles = 2):
+def volumecheck (data, type:str ="Buy", min_high_vol_candles = 2):
+
     volume = data["Volume"]
 
+    # FIX: sometimes Volume becomes multi-column → force 1D
+    if isinstance(volume, pd.DataFrame):
+        volume = volume.iloc[:, 0]
+
+    # Safety if less data
+    if len(volume) < 25:
+        return False
+
     last5 = volume.iloc[-6:-1]
-    
     average20 = volume.iloc[-21:-1].mean()
 
     count = (last5.values > average20).sum()
-    # print(f'last5 {last5}')
-    # print(f'cureent {average20}')
 
     return count > min_high_vol_candles
-
 
 
 def swingHigh(data, isBoolean: bool = False, window: int = 2):

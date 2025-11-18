@@ -5,8 +5,9 @@ import requests
 import pyotp
 import urllib.parse
 import time
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+file_loc = os.path.join(BASE_DIR, "config.json")
 
-file_loc = "config.json"
 # import json
 # import os
 # import requests
@@ -172,7 +173,7 @@ def place_Order(symbol, qty, order_type="B", price_type="MKT", limit_price="0", 
         print("Error:", str(e))
         return False
 
-# result =place_Order("SBIN" , 1)
+# result =place_Order("RELIANCE" , 1)
 
 # print("result ",result)
 

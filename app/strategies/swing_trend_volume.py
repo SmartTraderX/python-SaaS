@@ -39,14 +39,14 @@ async def swingLow_volume_trend_rsi_buy(symbol:str="SBIN" , timframe :str ="15m"
             and val >50
             and ok_volume
         ):
-            order = place_Order(symbol ,qty=1,order_type="B") 
+            order = place_Order(symbol ,qty=2,order_type="B") 
             if order :
                 print("Order Place SuccssFully for This Symbol{symbol}")
                 return 
             else:
-                print("Error")  
+                print("Error noo order place")  
 
-        else : print(f"condtion for symbol {symbol}  for this timframe{timframe}")        
+        else : print(f"condtion for symbol {symbol}  for this timframe{timframe} reult : false")        
     
     except Exception as e:
         print(f"error {str(e)}")
@@ -84,7 +84,7 @@ async def swingHigh_volume_trend_rsi_buy(symbol:str="SBIN" , timframe :str ="15m
             and val < 50
             and ok_volume
         ):
-            order =  place_Order(symbol,qty=1 , order_type="S")
+            order =  place_Order(symbol,qty=2 , order_type="S")
             if order :
                 print("Order Place SuccssFully for This Symbol{symbol}")
                 return 
@@ -99,7 +99,6 @@ async def swingHigh_volume_trend_rsi_buy(symbol:str="SBIN" , timframe :str ="15m
 
 
         
-
-place_Order("SBIN", qty=1)        
+      
 
 

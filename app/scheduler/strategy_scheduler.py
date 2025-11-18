@@ -59,7 +59,7 @@ async def process_queue(timeframe):
 
         await asyncio.gather(
             loop.run_in_executor(None,worker_up , up_trend_symbols, timeframe),
-            loop.run_in_executor(None, worker_down,down_trend_symbols , timeframe)
+            # loop.run_in_executor(None, worker_down,down_trend_symbols , timeframe)
         )
         print(f'All Threads is completed for this timeframe{timeframe}')
 
