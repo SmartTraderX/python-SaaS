@@ -73,25 +73,30 @@ def supertrend(data, period=10, multiplier=3):
         'ATR': atr
     })
 
-def volumecheck (data, type:str ="Buy", min_high_vol_candles = 2):
-
+def volumecheck(data, min_high_vol_candles=2):
     volume = data["Volume"]
 
-    # FIX: sometimes Volume becomes multi-column → force 1D
+    # ALWAYS keep volume 1D
     if isinstance(volume, pd.DataFrame):
-        volume = volume.iloc[:, 0]
+        if volume.shape[1] > 1:
+            volume = volume.iloc[:, 0]
+        else:
+            volume = volume.squeeze()
 
-    # Safety if less data
+    # Safety
     if len(volume) < 25:
         return False
 
     last5 = volume.iloc[-6:-1]
     average20 = volume.iloc[-21:-1].mean()
 
-    count = (last5.values > average20).sum()
+    # Convert everything to numpy float
+    last5 = last5.astype(float).values
+    average20 = float(average20)
+
+    count = (last5 > average20).sum()
 
     return count > min_high_vol_candles
-
 
 def swingHigh(data, isBoolean: bool = False, window: int = 2):
     if len(data) < window * 2 + 1:
@@ -817,7 +822,26 @@ def BacktestStrategy(strategy):
 
     print("All threads completed!")
     return results
+def BacktestStrategy_Testing(strategy):
+    print(" Backtest started for:", strategy["strategyName"])
+    threads = []
+    results = []
+    lock = threading.Lock()
 
+    symbols = strategy['orderDetails']['symbol']
+
+    for sym in symbols:
+        symbolName = sym['name']
+        t = threading.Thread(target=Backtest_Worker_Testing, args=(symbolName, strategy, results, lock))
+        t.start()
+        threads.append(t)
+
+    for t in threads:
+        t.join()
+
+    print("All threads completed!")
+    return results
+# Example usage:
 
 def Backtest_Worker_Testing(symbolName, strategy, results, lock):
     try:
@@ -862,8 +886,10 @@ def Backtest_Worker_Testing(symbolName, strategy, results, lock):
                 sma_20 = float(tb.SMA(newData['Close'], timeperiod=20).iloc[-1])
                 sma_50 = float(tb.SMA(newData['Close'], timeperiod=50).iloc[-1])
                 sma_200 = float(tb.SMA(newData['Close'], timeperiod=200).iloc[-1])
-                current_open = newData['Open'].iloc[-1]
-                current_close = newData['Close'].iloc[-1]
+                previous_open = newData['Open'].iloc[-2]
+                previous_close = newData['Close'].iloc[-2]
+                previous_high = newData['High'].iloc[-2]
+                previous_low = newData['Low'].iloc[-2]
                 high = newData['High'].iloc[-1]
                 low = newData['Low'].iloc[-1]
                 open = newData['Open'].iloc[-1]
@@ -873,14 +899,16 @@ def Backtest_Worker_Testing(symbolName, strategy, results, lock):
                 full = high - low
 
                 is_strong_body = body >= (0.5 * full)
-                ok_volume = volumecheck(data)
+                is_breakout = high > previous_high and previous_high > newData['High'].iloc[-3]
+
+                ok_volume = volumecheck(newData)
 
                 if( 
-                    swing_high_value and swing_high_value != 0 
-                    and is_strong_body 
-                    and sma_20 > sma_50
-                    and sma_50 > sma_200
-                    and val >50
+                    # swing_high_value and swing_high_value != 0 
+                    # and sma_20 > sma_50
+                    sma_50 > sma_200
+                    # and val >50
+                    and is_breakout
                     and ok_volume
                     and is_strong_body
                 ):
@@ -904,7 +932,7 @@ def Backtest_Worker_Testing(symbolName, strategy, results, lock):
                 entry_price = close_price
                 entry_time = currentTime
                 sl_buffer = 1
-                sl_price = swing_high_value - 5
+                sl_price = newData['Low'].iloc[-3] - 5
                 # TP = entry price ka 2% upar
                 tp_price = entry_price +10# fixed 10 point target
 
@@ -1003,107 +1031,19 @@ def Backtest_Worker_Testing(symbolName, strategy, results, lock):
             })
         print(f"❌ {symbolName}: Error -> {e}")
 
-def BacktestStrategy_Testing(strategy):
-    print(" Backtest started for:", strategy["strategyName"])
-    threads = []
-    results = []
-    lock = threading.Lock()
 
-    symbols = strategy['orderDetails']['symbol']
-
-    for sym in symbols:
-        symbolName = sym['name']
-        t = threading.Thread(target=Backtest_Worker_Testing, args=(symbolName, strategy, results, lock))
-        t.start()
-        threads.append(t)
-
-    for t in threads:
-        t.join()
-
-    print("All threads completed!")
-    return results
-# Example usage:
 strategy = {
   "_id": "690767bade68b5e0109817c1",
   "userId": None,
   "strategyName": "Testing strategy",
   "category": "Swing",
   "description": "testing ",
-  "timeframe": "5m",
+  "timeframe": "15m",
   "status": False,
   "associatedBroker": None,
   "createdBy": None,
   "createdAt": "2025-11-02T19:05:08.732000",
   "expiryDate": "2025-11-09T19:05:08.732000",
-  "condition": [
-    {
-      "name": "SMA",
-      "type": "indicator",
-      "category": "trend",
-      "orderType": "value",
-      "params": { "period": 50 },
-      "sourceAllowed": True
-    },
-    {
-      "name": ">",
-      "type": "condition"
-    },
-    {
-      "name": "SMA",
-      "type": "indicator",
-      "category": "trend",
-      "orderType": "value",
-      "params": { "period": 200 },
-      "sourceAllowed": True
-    },
-    {
-      "name": "And",
-      "type": "logicalOperator"
-    },
-    {
-      "name": "RSI",
-      "type": "indicator",
-      "category": "momentum",
-      "orderType": "value",
-      "params": { "period": 14 },
-      "sourceAllowed": True
-    },
-    {
-      "name": "<",
-      "type": "condition"
-    },
-    {
-      "name": "value",
-      "type": "indicator",
-      "params": { "value": 40 }
-    },
-    {
-      "name": "And",
-      "type": "logicalOperator"
-    },
-    {
-      "name": "MACD-macd",
-      "type": "indicator",
-      "category": "momentum",
-      "orderType": "multi-line",
-      "params": { "fast": 12, "slow": 26, "signal": 9 },
-      "lines": ["macd", "signal", "histogram"],
-      "sourceAllowed": True
-    },
-    {
-      "name": ">",
-      "type": "condition"
-    },
-    {
-      "name": "MACD-signal",
-      "type": "indicator",
-      "category": "momentum",
-      "orderType": "multi-line",
-      "params": { "fast": 12, "slow": 26, "signal": 9 },
-      "lines": ["macd", "signal", "histogram"],
-      "sourceAllowed": True
-    }
-  ],
   "orderDetails": {
     "action": "BUY",
     "symbol": [
@@ -1119,18 +1059,18 @@ strategy = {
     #     "theStrategyMatch": False,
     #     "symbolCode": "3045"
     #   },
-        {
-        "id": "690767bade68b5e0109817bf",
-        "name": "SBIN",
-        "theStrategyMatch": False,
-        "symbolCode": "3045"
-      },
-    #   {
-    #     "id": "690767bade68b5e0109817c0",
-    #     "name": "RELIANCE",
+    #     {
+    #     "id": "690767bade68b5e0109817bf",
+    #     "name": "SBIN",
     #     "theStrategyMatch": False,
-    #     "symbolCode": "2885"
-    #   }
+    #     "symbolCode": "3045"
+    #   },
+      {
+        "id": "690767bade68b5e0109817c0",
+        "name": "RELIANCE",
+        "theStrategyMatch": False,
+        "symbolCode": "2885"
+      }
     ]
   },
   "tags": [],
@@ -1143,7 +1083,6 @@ def saveInJson(results):
     with open("result.json","w") as f:
         json.dump({"results":results},f ,indent=4)
         print("save succesfully")
-
 
 
 if __name__ == "__main__":

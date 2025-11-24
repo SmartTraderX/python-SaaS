@@ -177,7 +177,7 @@ def place_Order(symbol, qty, order_type="B", price_type="MKT", limit_price="0", 
 
 # print("result ",result)
 
-
+# login()
 # ts = Trading Symbol
 # es = Exchange Segment
 # tt = Buy / Sell

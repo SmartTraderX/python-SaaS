@@ -2,6 +2,8 @@ import asyncio
 from datetime import datetime
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
+from apscheduler.triggers.cron import CronTrigger
+
 import threading
 from app.strategies.swing_trend_volume import (swingHigh_volume_trend_rsi_buy, swingLow_volume_trend_rsi_buy)
 from app.logger import logger
@@ -70,11 +72,12 @@ async def process_queue(timeframe):
 
 # scheduler startup function (unchanged)
 async def start_scheduler():
+    # asyncio.run(process_queue("15min"))
     scheduler = AsyncIOScheduler()
-    # scheduler.add_job(process_queue, IntervalTrigger(minutes=1), args=["1m"])
-    # scheduler.add_job(process_queue, IntervalTrigger(minutes=3), args=["3m"])
-    # scheduler.add_job(process_queue, IntervalTrigger(minutes=5), args=["5m"])
-    scheduler.add_job(process_queue, IntervalTrigger(minutes=15), args=["15m"])
+    # scheduler.add_job(process_queue, CronTrigger(second=0), args=["1m"])
+    # scheduler.add_job(process_queue, CronTrigger(minute="*/3", second=0), args=["3m"])
+    # scheduler.add_job(process_queue, CronTrigger(minute="*/5", second=0), args=["5m"])
+    scheduler.add_job(process_queue, CronTrigger(minute="*/15", second=0), args=["15m"])
     # scheduler.add_job(process_queue, IntervalTrigger(minutes=60), args=["1h"])
     scheduler.start()
     logger.info(" APScheduler started successfully.")
