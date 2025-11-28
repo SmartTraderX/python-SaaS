@@ -2,6 +2,7 @@ from fastapi import FastAPI
 # from app.routes.strategy_routes import router as strategy_router
 # from app.routes.order_routes import router as order_router
 from app.scheduler.strategy_scheduler import start_scheduler
+from app.strategies.swing_trend_volume import (swingHigh_volume_trend_rsi_buy , swingLow_volume_trend_rsi_buy)
 # from app.scheduler.broker_scheduler import calculate_sl_tp
 # from app.db.init_db import init_db
 from contextlib import asynccontextmanager
@@ -23,6 +24,10 @@ async def lifespan(app: FastAPI):
         # Start background schedulers safely (no extra args to create_task)
         loop.create_task(start_scheduler())
         print("Strategy scheduler started in background.")
+        loop.create_task(swingLow_volume_trend_rsi_buy())
+        loop.create_task(swingHigh_volume_trend_rsi_buy())
+        print("Strategies running in background")
+
 
         # Start SL/TP background watcher on same loop
         # user_id = "6905f6e134e7250e9e8b3389"

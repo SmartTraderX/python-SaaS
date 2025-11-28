@@ -19,7 +19,7 @@ volatile_symbols = ["SBIN", "RELIANCE", "HDFCBANK", "TATAMOTORS", "LT", "INFY", 
 
 up_trend_symbols = ["SBIN", "RELIANCE", "HDFCBANK"] 
 
-down_trend_symbols = [" INFY","TCS"]
+down_trend_symbols = ["INFY","TCS","RELIANCE","SBIN","HDFCBANK"]
 
 
 def run_in_async_thread(coro , *args):
@@ -61,7 +61,7 @@ async def process_queue(timeframe):
 
         await asyncio.gather(
             loop.run_in_executor(None,worker_up , up_trend_symbols, timeframe),
-            # loop.run_in_executor(None, worker_down,down_trend_symbols , timeframe)
+            loop.run_in_executor(None, worker_down,down_trend_symbols , timeframe)
         )
         print(f'All Threads is completed for this timeframe{timeframe}')
 
@@ -77,7 +77,7 @@ async def start_scheduler():
     # scheduler.add_job(process_queue, CronTrigger(second=0), args=["1m"])
     # scheduler.add_job(process_queue, CronTrigger(minute="*/3", second=0), args=["3m"])
     # scheduler.add_job(process_queue, CronTrigger(minute="*/5", second=0), args=["5m"])
-    scheduler.add_job(process_queue, CronTrigger(minute="*/15", second=0), args=["15m"])
+    scheduler.add_job(process_queue, CronTrigger(minute="*/1", second=10), args=["15m"])
     # scheduler.add_job(process_queue, IntervalTrigger(minutes=60), args=["1h"])
     scheduler.start()
     logger.info(" APScheduler started successfully.")

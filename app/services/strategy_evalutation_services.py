@@ -10,7 +10,7 @@ import threading
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, ".."))  # One level up
 sys.path.append(project_root)
-from utility.get_historical_data import getIntradayData , getHistoricalData
+# from utility.get_historical_data import getIntradayData , getHistoricalData
 # from app.services.paper_trade_service import (create_paper_Order)
 # from app.services.strategy_service import (mark_symbol_match)
 # from app.models.strategy_model import Strategy
@@ -114,10 +114,10 @@ def swingHigh(data, isBoolean: bool = False, window: int = 2):
     # swing high = middle candle higher than both sides
     if middle_high > max(left_high) and middle_high > max(right_high):
         swing_high = middle_high
-        return True if isBoolean else swing_high
+        return swing_high
 
-    return False if isBoolean else 0
-
+    return None
+ 
 
 def swingLow(data, isBoolean: bool = False, window: int = 2):
     if len(data) < window * 2 + 1:
@@ -137,9 +137,9 @@ def swingLow(data, isBoolean: bool = False, window: int = 2):
         swing_low = middle_low
         # val = float(tb.RSI(data['Close'], timeperiod=14).iloc[-1])
         # if val < 40 :
-        return True if isBoolean else swing_low
+        return swing_low
     
-    return False if isBoolean else 0
+    return None
 
 
 
@@ -879,48 +879,98 @@ def Backtest_Worker_Testing(symbolName, strategy, results, lock):
 
             # --- Condition Evaluation ---
             signal = False
+            ok_volume = volumecheck(newData)
+
+        # ---- Extract Latest Candle ----
+            open_ = newData['Open'].iloc[-1]
+            close_ = newData['Close'].iloc[-1]
+            high = newData['High'].iloc[-1]
+            low = newData['Low'].iloc[-1]
+
+            prev_open = newData['Open'].iloc[-2]
+            prev_close = newData['Close'].iloc[-2]
+            prev_high = newData['High'].iloc[-2]
+            prev_low = newData['Low'].iloc[-2]
+
+                # ---- Candle Strength ----
+            body = abs(close_ - open_)
+            full = high - low
+            is_strong_body = full > 0 and body >= 0.5 * full
+
+                # ---- Indicators ----
+            rsi = float(tb.RSI(newData['Close'], timeperiod=14).iloc[-1])
+            sma20 = float(tb.SMA(newData['Close'], timeperiod=20).iloc[-1])
+            sma50 = float(tb.SMA(newData['Close'], timeperiod=50).iloc[-1])
+            sma200 = float(tb.SMA(newData['Close'], timeperiod=200).iloc[-1])
+
+                # ---- Proper Breakout Logic ----
+            
+
+                # ---- Swing Low ----
+            # buy trend 
+            # try:
+            #     # ---------- STRATEGY 1: SWING + TREND + VOLUME ----------
+            # is_breakout = high > prev_high and prev_high > newData['High'].iloc[-3]
+                #   swing_low_value = swingLow(newData)
+            #     if (
+            #         swing_low_value is not None
+            #         and is_strong_body
+            #         and sma20 > sma50 > sma200     # uptrend confirmation
+            #         and rsi > 50
+            #         and ok_volume
+            #     ):
+            #         signal = True
+            #         count += 1
+
+            #     # ------------- STRATEGY 2: BREAKOUT + TREND + VOLUME -------------
+            #     elif (
+            #         ok_volume
+            #         and sma50 > sma200
+            #         and is_strong_body
+            #         and is_breakout
+            #     ):
+            #         signal = True
+                    
+            #             # obj = {
+            #             #     # "newData":currentTime,
+            #             #     "count" : count+1
+            #             # }
+            #         count += 1
+            #             # signal_count.append(obj)
+            # except Exception as cond_err:
+            #         print(f"⚠️ {symbolName}: Condition evaluation error -> {cond_err}")
+            # selltrend
             try:
-                swing_high_value = swingLow(newData)
-                # print(swing_high_value)
-                val = float(tb.RSI(newData['Close'], timeperiod=14).iloc[-1])
-                sma_20 = float(tb.SMA(newData['Close'], timeperiod=20).iloc[-1])
-                sma_50 = float(tb.SMA(newData['Close'], timeperiod=50).iloc[-1])
-                sma_200 = float(tb.SMA(newData['Close'], timeperiod=200).iloc[-1])
-                previous_open = newData['Open'].iloc[-2]
-                previous_close = newData['Close'].iloc[-2]
-                previous_high = newData['High'].iloc[-2]
-                previous_low = newData['Low'].iloc[-2]
-                high = newData['High'].iloc[-1]
-                low = newData['Low'].iloc[-1]
-                open = newData['Open'].iloc[-1]
-                close = newData['Close'].iloc[-1]
-
-                body = abs(close - open)
-                full = high - low
-
-                is_strong_body = body >= (0.5 * full)
-                is_breakout = high > previous_high and previous_high > newData['High'].iloc[-3]
-
-                ok_volume = volumecheck(newData)
-
-                if( 
-                    # swing_high_value and swing_high_value != 0 
-                    # and sma_20 > sma_50
-                    sma_50 > sma_200
-                    # and val >50
-                    and is_breakout
-                    and ok_volume
+                # ---------- STRATEGY 1: SWING + TREND + VOLUME ----------
+                is_breakout = low < prev_low and prev_low < data['Low'].iloc[-3]
+                swing_high_value = swingHigh(data)
+                if (
+                    swing_high_value is not None
                     and is_strong_body
+                    and sma50 < sma200     # uptrend confirmation
+                    and rsi < 50
+                    and ok_volume
                 ):
                     signal = True
-                    # obj = {
-                    #     # "data":currentTime,
-                    #     "count" : count+1
-                    # }
                     count += 1
-                    # signal_count.append(obj)
+
+                # ------------- STRATEGY 2: BREAKOUT + TREND + VOLUME -------------
+                elif (
+                    ok_volume
+                    and sma50 < sma200
+                    and is_strong_body
+                    and is_breakout
+                ):
+                    signal = True
+                    
+                        # obj = {
+                        #     # "newData":currentTime,
+                        #     "count" : count+1
+                        # }
+                    count += 1
+                        # signal_count.append(obj)
             except Exception as cond_err:
-                print(f"⚠️ {symbolName}: Condition evaluation error -> {cond_err}")
+                    print(f"⚠️ {symbolName}: Condition evaluation error -> {cond_err}")        
 
             # --- ENTRY ---
 
@@ -932,12 +982,12 @@ def Backtest_Worker_Testing(symbolName, strategy, results, lock):
                 entry_price = close_price
                 entry_time = currentTime
                 sl_buffer = 1
-                sl_price = newData['Low'].iloc[-3] - 5
+                sl_price = newData['High'].iloc[-3] + 5
                 # TP = entry price ka 2% upar
-                tp_price = entry_price +10# fixed 10 point target
+                tp_price = entry_price - 10# fixed 10 point target
 
                 position = {
-                    "type": "BUY",
+                    "type": "SELL",
                     "entry_price": entry_price,
                     "entry_time": str(entry_time),
                     "sl_price": sl_price,
@@ -1047,30 +1097,30 @@ strategy = {
   "orderDetails": {
     "action": "BUY",
     "symbol": [
+        {
+        "id": "690767bade68b5e0109817bf",
+        "name": "AXISBANK",
+        "theStrategyMatch": False,
+        "symbolCode": "3045"
+      },
+    #   {
+    #     "id": "690767bade68b5e0109817bf",
+    #     "name": "HDFCBANK",
+    #     "theStrategyMatch": False,
+    #     "symbolCode": "3045"
+    #   },
     #     {
     #     "id": "690767bade68b5e0109817bf",
-    #     "name": "RELIANCE",
+    #     "name": "AXISBANK",
     #     "theStrategyMatch": False,
     #     "symbolCode": "3045"
     #   },
     #   {
-    #     "id": "690767bade68b5e0109817bf",
-    #     "name": "TCS",
+    #     "id": "690767bade68b5e0109817c0",
+    #     "name": "RELIANCE",
     #     "theStrategyMatch": False,
-    #     "symbolCode": "3045"
-    #   },
-    #     {
-    #     "id": "690767bade68b5e0109817bf",
-    #     "name": "SBIN",
-    #     "theStrategyMatch": False,
-    #     "symbolCode": "3045"
-    #   },
-      {
-        "id": "690767bade68b5e0109817c0",
-        "name": "RELIANCE",
-        "theStrategyMatch": False,
-        "symbolCode": "2885"
-      }
+    #     "symbolCode": "2885"
+    #   }
     ]
   },
   "tags": [],
@@ -1080,7 +1130,8 @@ strategy = {
 
 def saveInJson(results):
     import json
-    with open("result.json","w") as f:
+    symbolname = results[0]["symbol"]
+    with open(f"result_{symbolname}.json","w") as f:
         json.dump({"results":results},f ,indent=4)
         print("save succesfully")
 

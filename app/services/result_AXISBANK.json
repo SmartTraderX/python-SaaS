@@ -1,0 +1,261 @@
+{
+    "results": [
+        {
+            "symbol": "AXISBANK",
+            "metrices": {
+                "total_trades": 22,
+                "sinal_count": 27,
+                "winning_trades": 22,
+                "losing_trades": 0,
+                "winning_pnl": -220.0,
+                "losing_pnl": 0,
+                "total_pnl": -220.0,
+                "win_rate": 100.0
+            },
+            "trades": [
+                {
+                    "type": "SELL",
+                    "entry_price": 1134.0,
+                    "entry_time": "2025-09-29 09:45:00+00:00",
+                    "sl_price": 1135.300048828125,
+                    "tp_price": 1124.0,
+                    "exit_price": 1134.0,
+                    "exit_time": "2025-09-30 03:45:00+00:00",
+                    "exit_reason": "TP Hit",
+                    "pnl": -10.0
+                },
+                {
+                    "type": "SELL",
+                    "entry_price": 1131.0999755859375,
+                    "entry_time": "2025-09-30 09:30:00+00:00",
+                    "sl_price": 1137.4000244140625,
+                    "tp_price": 1121.0999755859375,
+                    "exit_price": 1133.199951171875,
+                    "exit_time": "2025-09-30 09:45:00+00:00",
+                    "exit_reason": "TP Hit",
+                    "pnl": -10.0
+                },
+                {
+                    "type": "SELL",
+                    "entry_price": 1178.199951171875,
+                    "entry_time": "2025-10-03 05:00:00+00:00",
+                    "sl_price": 1188.9000244140625,
+                    "tp_price": 1168.199951171875,
+                    "exit_price": 1174.300048828125,
+                    "exit_time": "2025-10-03 05:15:00+00:00",
+                    "exit_reason": "TP Hit",
+                    "pnl": -10.0
+                },
+                {
+                    "type": "SELL",
+                    "entry_price": 1169.0999755859375,
+                    "entry_time": "2025-10-15 04:00:00+00:00",
+                    "sl_price": 1182.9000244140625,
+                    "tp_price": 1159.0999755859375,
+                    "exit_price": 1165.4000244140625,
+                    "exit_time": "2025-10-15 04:15:00+00:00",
+                    "exit_reason": "TP Hit",
+                    "pnl": -10.0
+                },
+                {
+                    "type": "SELL",
+                    "entry_price": 1172.9000244140625,
+                    "entry_time": "2025-10-15 09:30:00+00:00",
+                    "sl_price": 1172.4000244140625,
+                    "tp_price": 1162.9000244140625,
+                    "exit_price": 1168.4000244140625,
+                    "exit_time": "2025-10-15 09:45:00+00:00",
+                    "exit_reason": "TP Hit",
+                    "pnl": -10.0
+                },
+                {
+                    "type": "SELL",
+                    "entry_price": 1193.699951171875,
+                    "entry_time": "2025-10-16 04:45:00+00:00",
+                    "sl_price": 1209.9000244140625,
+                    "tp_price": 1183.699951171875,
+                    "exit_price": 1187.4000244140625,
+                    "exit_time": "2025-10-16 05:00:00+00:00",
+                    "exit_reason": "TP Hit",
+                    "pnl": -10.0
+                },
+                {
+                    "type": "SELL",
+                    "entry_price": 1233.5999755859375,
+                    "entry_time": "2025-10-31 09:30:00+00:00",
+                    "sl_price": 1240.0,
+                    "tp_price": 1223.5999755859375,
+                    "exit_price": 1232.0,
+                    "exit_time": "2025-10-31 09:45:00+00:00",
+                    "exit_reason": "TP Hit",
+                    "pnl": -10.0
+                },
+                {
+                    "type": "SELL",
+                    "entry_price": 1224.199951171875,
+                    "entry_time": "2025-11-03 04:00:00+00:00",
+                    "sl_price": 1238.800048828125,
+                    "tp_price": 1214.199951171875,
+                    "exit_price": 1232.0,
+                    "exit_time": "2025-11-03 04:15:00+00:00",
+                    "exit_reason": "TP Hit",
+                    "pnl": -10.0
+                },
+                {
+                    "type": "SELL",
+                    "entry_price": 1233.5999755859375,
+                    "entry_time": "2025-11-03 09:45:00+00:00",
+                    "sl_price": 1241.5999755859375,
+                    "tp_price": 1223.5999755859375,
+                    "exit_price": 1233.699951171875,
+                    "exit_time": "2025-11-04 03:45:00+00:00",
+                    "exit_reason": "TP Hit",
+                    "pnl": -10.0
+                },
+                {
+                    "type": "SELL",
+                    "entry_price": 1228.800048828125,
+                    "entry_time": "2025-11-04 09:45:00+00:00",
+                    "sl_price": 1230.4000244140625,
+                    "tp_price": 1218.800048828125,
+                    "exit_price": 1226.5999755859375,
+                    "exit_time": "2025-11-06 03:45:00+00:00",
+                    "exit_reason": "TP Hit",
+                    "pnl": -10.0
+                },
+                {
+                    "type": "SELL",
+                    "entry_price": 1219.0999755859375,
+                    "entry_time": "2025-11-07 04:00:00+00:00",
+                    "sl_price": 1235.800048828125,
+                    "tp_price": 1209.0999755859375,
+                    "exit_price": 1220.5999755859375,
+                    "exit_time": "2025-11-07 04:15:00+00:00",
+                    "exit_reason": "TP Hit",
+                    "pnl": -10.0
+                },
+                {
+                    "type": "SELL",
+                    "entry_price": 1222.800048828125,
+                    "entry_time": "2025-11-07 08:45:00+00:00",
+                    "sl_price": 1232.4000244140625,
+                    "tp_price": 1212.800048828125,
+                    "exit_price": 1226.0,
+                    "exit_time": "2025-11-07 09:00:00+00:00",
+                    "exit_reason": "TP Hit",
+                    "pnl": -10.0
+                },
+                {
+                    "type": "SELL",
+                    "entry_price": 1221.699951171875,
+                    "entry_time": "2025-11-07 09:45:00+00:00",
+                    "sl_price": 1231.9000244140625,
+                    "tp_price": 1211.699951171875,
+                    "exit_price": 1224.0999755859375,
+                    "exit_time": "2025-11-10 03:45:00+00:00",
+                    "exit_reason": "TP Hit",
+                    "pnl": -10.0
+                },
+                {
+                    "type": "SELL",
+                    "entry_price": 1225.4000244140625,
+                    "entry_time": "2025-11-10 04:00:00+00:00",
+                    "sl_price": 1229.300048828125,
+                    "tp_price": 1215.4000244140625,
+                    "exit_price": 1229.199951171875,
+                    "exit_time": "2025-11-10 04:15:00+00:00",
+                    "exit_reason": "TP Hit",
+                    "pnl": -10.0
+                },
+                {
+                    "type": "SELL",
+                    "entry_price": 1224.199951171875,
+                    "entry_time": "2025-11-10 05:15:00+00:00",
+                    "sl_price": 1234.300048828125,
+                    "tp_price": 1214.199951171875,
+                    "exit_price": 1225.300048828125,
+                    "exit_time": "2025-11-10 05:30:00+00:00",
+                    "exit_reason": "TP Hit",
+                    "pnl": -10.0
+                },
+                {
+                    "type": "SELL",
+                    "entry_price": 1219.0999755859375,
+                    "entry_time": "2025-11-10 09:15:00+00:00",
+                    "sl_price": 1227.9000244140625,
+                    "tp_price": 1209.0999755859375,
+                    "exit_price": 1218.0,
+                    "exit_time": "2025-11-10 09:30:00+00:00",
+                    "exit_reason": "TP Hit",
+                    "pnl": -10.0
+                },
+                {
+                    "type": "SELL",
+                    "entry_price": 1216.5,
+                    "entry_time": "2025-11-10 09:45:00+00:00",
+                    "sl_price": 1226.4000244140625,
+                    "tp_price": 1206.5,
+                    "exit_price": 1217.0,
+                    "exit_time": "2025-11-11 03:45:00+00:00",
+                    "exit_reason": "TP Hit",
+                    "pnl": -10.0
+                },
+                {
+                    "type": "SELL",
+                    "entry_price": 1217.0999755859375,
+                    "entry_time": "2025-11-11 04:45:00+00:00",
+                    "sl_price": 1227.4000244140625,
+                    "tp_price": 1207.0999755859375,
+                    "exit_price": 1212.5,
+                    "exit_time": "2025-11-11 05:00:00+00:00",
+                    "exit_reason": "TP Hit",
+                    "pnl": -10.0
+                },
+                {
+                    "type": "SELL",
+                    "entry_price": 1227.300048828125,
+                    "entry_time": "2025-11-12 04:45:00+00:00",
+                    "sl_price": 1237.5,
+                    "tp_price": 1217.300048828125,
+                    "exit_price": 1226.300048828125,
+                    "exit_time": "2025-11-12 05:00:00+00:00",
+                    "exit_reason": "TP Hit",
+                    "pnl": -10.0
+                },
+                {
+                    "type": "SELL",
+                    "entry_price": 1224.699951171875,
+                    "entry_time": "2025-11-12 09:45:00+00:00",
+                    "sl_price": 1232.4000244140625,
+                    "tp_price": 1214.699951171875,
+                    "exit_price": 1218.0,
+                    "exit_time": "2025-11-13 03:45:00+00:00",
+                    "exit_reason": "TP Hit",
+                    "pnl": -10.0
+                },
+                {
+                    "type": "SELL",
+                    "entry_price": 1224.699951171875,
+                    "entry_time": "2025-11-13 09:30:00+00:00",
+                    "sl_price": 1232.0,
+                    "tp_price": 1214.699951171875,
+                    "exit_price": 1224.199951171875,
+                    "exit_time": "2025-11-13 09:45:00+00:00",
+                    "exit_reason": "TP Hit",
+                    "pnl": -10.0
+                },
+                {
+                    "type": "SELL",
+                    "entry_price": 1232.9000244140625,
+                    "entry_time": "2025-11-14 04:00:00+00:00",
+                    "sl_price": 1230.5,
+                    "tp_price": 1222.9000244140625,
+                    "exit_price": 1231.300048828125,
+                    "exit_time": "2025-11-14 04:15:00+00:00",
+                    "exit_reason": "TP Hit",
+                    "pnl": -10.0
+                }
+            ]
+        }
+    ]
+}
