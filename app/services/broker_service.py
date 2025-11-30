@@ -21,10 +21,11 @@ def generate_totp(secret):
     """Generate TOTP"""
     try:
         totp = pyotp.TOTP(secret)
-        return totp.now()
+        return totp.now()       # IMPORTANT FIX
     except:
         print("❌ Invalid TOTP secret")
         return None
+
 
 
 def login():
@@ -37,7 +38,8 @@ def login():
         data = json.load(f)
 
     # ----------- STEP 1 : TOTP LOGIN -----------
-    totp_code = input("ENTER TOTP login:")
+    totp_code = generate_totp(data.get("TOTP_SECRET"))
+    print("Generated TOTP:", totp_code)
     if not totp_code:
         print("❌ Cannot generate TOTP")
         return None
@@ -177,7 +179,7 @@ def place_Order(symbol, qty, order_type="B", price_type="MKT", limit_price="0", 
 
 # print("result ",result)
 
-# login()
+login()
 # # ts = Trading Symbol
 # es = Exchange Segment
 # tt = Buy / Sell
