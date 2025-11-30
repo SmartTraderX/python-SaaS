@@ -38,7 +38,7 @@ def login():
         data = json.load(f)
 
     # ----------- STEP 1 : TOTP LOGIN -----------
-    totp_code = generate_totp(data.get("TOTP_SECRET"))
+    totp_code = input("Enter your totp ")
     print("Generated TOTP:", totp_code)
     if not totp_code:
         print("❌ Cannot generate TOTP")
