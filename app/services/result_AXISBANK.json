@@ -259,3 +259,7 @@
         }
     ]
 }
+
+
+TA-Lib @ file:///C:/Users/Visha/Downloads/ta_lib-0.6.8-cp311-cp311-win_amd64.whl#sha256=5a3ba344168a76aa8498dd05686187e45e690ab077c057565060de5b3006d31c
+pytz==2025.2
