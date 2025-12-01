@@ -117,7 +117,7 @@ def format_symbol(symbol, product):
             symbol = symbol + "-EQ"
 
     return symbol
-def place_Order(symbol, qty, order_type="B", price_type="MKT", limit_price="0", product="CNC"):
+def place_Order(symbol, qty, order_type="B", price_type="MKT", limit_price="0", product="CNC" , sl_price  = None , tp_price  = None):
     try:
         with open(file_loc, "r") as f:
             data = json.load(f)
@@ -145,11 +145,11 @@ def place_Order(symbol, qty, order_type="B", price_type="MKT", limit_price="0", 
             "mp": limit_price,
             "pc": product,
             "pf": "N",
-            "pr": "0",
+            "pr": tp_price if tp_price else "0",
             "pt": price_type,
             "qt": str(qty),
             "rt": "DAY",
-            "tp": "0",
+            "tp": sl_price if sl_price else "0",
             "ts": symbol,
             "tt": order_type
         }
