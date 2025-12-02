@@ -4,13 +4,14 @@ import os
 import numpy as np
 import pandas as pd
 import talib as  tb
+import yfinance as yf
 import asyncio
+from datetime import datetime
 import logging
 import threading
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, ".."))  # One level up
 sys.path.append(project_root)
-# from utility.get_historical_data import getIntradayData , getHistoricalData
 # from app.services.paper_trade_service import (create_paper_Order)
 # from app.services.strategy_service import (mark_symbol_match)
 # from app.models.strategy_model import Strategy
@@ -842,13 +843,51 @@ def BacktestStrategy_Testing(strategy):
     print("All threads completed!")
     return results
 # Example usage:
+def fix_yf_multiindex(df: pd.DataFrame):
+    """
+    YFinance sometimes returns:
+        columns = [('High', ''), ('Low',''), ...] → MultiIndex
+    This will ALWAYS fix it into single-level columns.
+    """
+    if isinstance(df.columns, pd.MultiIndex):
+        df.columns = [col[0] for col in df.columns]   # remove second level
+    return df
+
+
+intervals = {
+    "5m":"60d",
+    "15m":"60d",
+    "1h":"730d"
+}
 
 def Backtest_Worker_Testing(symbolName, strategy, results, lock):
     try:
         print(f"🔹 {symbolName}: Thread started")
 
         timeframe = strategy['timeframe']
-        data = getIntradayData(symbolName, timeframe)
+        ticker = f"{symbolName}.NS"
+        interval = intervals[timeframe]
+        data = yf.download(ticker, interval=timeframe, period=interval, progress=False)
+
+        if data is None or data.empty:
+            print(f"{symbolName}: Data empty")
+            return
+
+        # Fix MultiIndex columns
+        data = fix_yf_multiindex(data)
+
+        # Fix timezone
+        if data.index.tz is None:
+            data.index = data.index.tz_localize("UTC").tz_convert("Asia/Kolkata")
+        else:
+            data.index = data.index.tz_convert("Asia/Kolkata")
+
+        currentime =  datetime.now()
+        data = data.iloc[:-1]  # remove running candle
+
+        print(f"\n=== {symbolName} ===")
+
+        print(data.tail(3))
 
         if data is None or data.empty:
             print(f"⚠️ {symbolName}: No data returned")
@@ -1067,7 +1106,7 @@ def Backtest_Worker_Testing(symbolName, strategy, results, lock):
             results.append({
                 "symbol": symbolName,
                 "metrices": metrices,
-                "trades": backtestResults  # full JSON objects
+                "trades": list(reversed(backtestResults))  # full JSON objects
             })
         print(f"{symbolName}: Completed with {metrices['total_trades']} trades")
 
@@ -1097,12 +1136,12 @@ strategy = {
   "orderDetails": {
     "action": "BUY",
     "symbol": [
-        {
-        "id": "690767bade68b5e0109817bf",
-        "name": "AXISBANK",
-        "theStrategyMatch": False,
-        "symbolCode": "3045"
-      },
+    #     {
+    #     "id": "690767bade68b5e0109817bf",
+    #     "name": "TCS",
+    #     "theStrategyMatch": False,
+    #     "symbolCode": "3045"
+    #   },
     #   {
     #     "id": "690767bade68b5e0109817bf",
     #     "name": "HDFCBANK",
@@ -1115,18 +1154,19 @@ strategy = {
     #     "theStrategyMatch": False,
     #     "symbolCode": "3045"
     #   },
-    #   {
-    #     "id": "690767bade68b5e0109817c0",
-    #     "name": "RELIANCE",
-    #     "theStrategyMatch": False,
-    #     "symbolCode": "2885"
-    #   }
+      {
+        "id": "690767bade68b5e0109817c0",
+        "name": "RELIANCE",
+        "theStrategyMatch": False,
+        "symbolCode": "2885"
+      }
     ]
   },
   "tags": [],
   "totalSubscriber": []
 }
-
+uptrend = [ "SBIN", "RELIANCE", "HDFCBANK", "ICICIBANK"]
+downtrend =["AXISBANK", "INFY", "TCS","SBIN", "RELIANCE", "HDFCBANK", "ICICIBANK"]
 
 def saveInJson(results):
     import json

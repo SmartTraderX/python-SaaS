@@ -164,9 +164,9 @@ async def swingLow_volume_trend_rsi_buy(symbol="SBIN", timeframe="15m"):
             signal = True
 
         if signal:
-            sl  = data['low'].iloc[-3] + 5
-            tp  = c + 10
-            place_Order(symbol,2,"B" , sl_price=sl , tp_price=tp)
+            # sl  = data['low'].iloc[-3] + 5
+            # tp  = c + 10
+            place_Order(symbol,2,"B")
             print(f"BUY SIGNAL for {symbol}")
         else:
             print(f"No Buy signal for {symbol}")
@@ -248,9 +248,9 @@ async def swingHigh_volume_trend_rsi_buy(symbol="HDFCBANK", timeframe="15m"):
             signal = True
 
         if signal:
-            sl  = data['High'].iloc[-3] + 5
-            tp  = c - 10
-            place_Order(symbol,2,"S" , sl_price=sl , tp_price=tp)
+            # sl  = data['High'].iloc[-3] + 5
+            # tp  = c - 10
+            place_Order(symbol,2,"S")
             print(f"SELL SIGNAL for {symbol}")
         else:
             print(f"No Sell signal for {symbol}")
