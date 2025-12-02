@@ -26,7 +26,11 @@ def fix_yf_multiindex(df: pd.DataFrame):
         df.columns = [col[0] for col in df.columns]   # remove second level
     return df
 
-
+intervals = {
+    "5m":"60d",
+    "15m":"60d",
+    "1h":"730d"
+}
 # ---------------------- VOLUME CHECK ----------------------
 def volumecheck(data, min_high_vol_candles=2):
     volume = data["Volume"]
@@ -86,7 +90,8 @@ def swingLow(data, window=2):
 async def swingLow_volume_trend_rsi_buy(symbol="SBIN", timeframe="15m"):
     try:
         ticker = f"{symbol}.NS"
-        data = yf.download(ticker, interval=timeframe, period="60d", progress=False)
+        interval = intervals[timeframe]
+        data = yf.download(ticker, interval=timeframe, period=interval, progress=False)
 
         if data is None or data.empty:
             print(f"{symbol}: Data empty")
@@ -175,7 +180,8 @@ async def swingLow_volume_trend_rsi_buy(symbol="SBIN", timeframe="15m"):
 async def swingHigh_volume_trend_rsi_buy(symbol="HDFCBANK", timeframe="15m"):
     try:
         ticker = f"{symbol}.NS"
-        data = yf.download(ticker, interval=timeframe, period="60d", progress=False)
+        interval = intervals[timeframe]
+        data = yf.download(ticker, interval=timeframe, period=interval, progress=False)
 
         if data is None or data.empty:
             print(f"{symbol}: Data empty")
@@ -298,7 +304,12 @@ async def start_scheduler():
         loop.create_task(run_all_strategies("15m")),
     CronTrigger(minute="*/15", second=10)
         )
-
+    
+    scheduler.add_job(
+        lambda loop=asyncio.get_running_loop():
+            loop.create_task(run_all_strategies("1h")),
+        CronTrigger(hour="9,10,11,12,13,14,15", minute=15, second=10)
+    )
 
     # scheduler.add_job(process_queue, IntervalTrigger(minutes=60), args=["1h"])
     scheduler.start()
