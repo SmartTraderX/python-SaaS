@@ -175,11 +175,11 @@ def place_Order(symbol, qty, order_type="B", price_type="MKT", limit_price="0", 
         print("Error:", str(e))
         return False
 
-result =place_Order("RELIANCE" ,10000)
+# result =place_Order("RELIANCE" ,10000)
 
-print("result ",result)
+# print("result ",result)
 
-login()
+# login()
 # # ts = Trading Symbol
 # es = Exchange Segment
 # tt = Buy / Sell
