@@ -175,7 +175,8 @@ def place_Order(symbol, qty, order_type="B", price_type="MKT", limit_price="0", 
         print("Error:", str(e))
         return False
 
-# result =place_Order("RELIANCE" ,10000)
+
+# result =place_Order("RELIANCE" ,10000 , "S")
 
 # print("result ",result)
 
