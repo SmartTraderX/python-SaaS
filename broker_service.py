@@ -176,6 +176,64 @@ def place_Order(symbol, qty, order_type="B", price_type="MKT", limit_price="0", 
         return False
 
 
+def place_future_Order(symbol, qty, order_type="B", price_type="MKT", limit_price="0", product="CNC" ):
+    try:
+        with open(file_loc, "r") as f:
+            data = json.load(f)
+
+        BASE_URL = data.get("BASE_URL")
+        TOKEN = data.get("TRADING_TOKEN")
+        SID = data.get("TRADING_SID")
+        EXPIRY_TIME  = data.get("EXPIRY_TIME")
+        current_time = time.time()
+
+        if not TOKEN or not SID or not EXPIRY_TIME or current_time > EXPIRY_TIME:
+            login_data = login()
+            BASE_URL = login_data["BASE_URL"]
+            TOKEN = login_data["TRADING_TOKEN"]
+            SID = login_data["TRADING_SID"]
+
+        symbol = format_symbol(symbol, product)    
+
+        url = f"{BASE_URL}/quick/order/rule/ms/place"
+
+        jdata = {
+            "am": "NO",
+            "dq": "0",
+            "es": "nse_cm",
+            "mp": limit_price,
+            "pc": product,
+            "pf": "N",
+            "pr": "0",
+            "pt": price_type,
+            "qt": str(qty),
+            "rt": "DAY",
+            "tp": "0",
+            "ts": symbol,
+            "tt": order_type
+        }
+
+        # 🔥 KOTAK requires jData AS PLAIN STRING
+        body = f"jData={json.dumps(jdata)}"
+
+        headers = {
+            "Auth": TOKEN,
+            "Sid": SID,
+            "neo-fin-key": "neotradeapi",
+            "Content-Type": "application/x-www-form-urlencoded"
+        }
+
+        print("\nFINAL BODY SENT →", body)
+
+        res = requests.post(url, data=body, headers=headers)
+
+        print("\nOrder Response:", res.text)
+        return True
+
+    except Exception as e:
+        print("Error:", str(e))
+        return False
+
 # result =place_Order("RELIANCE" ,10000 , "S")
 
 # print("result ",result)

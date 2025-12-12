@@ -1,13 +1,4 @@
 {
-    "MOBILE": "+917340479570",
-    "UCC": "WEE57",
-    "TOTP_SECRET": "SCPBAASWRSWL6GB7CBY4HLN5LE",
-    "MPIN": "734047",
-    "ACCESS_TOKEN": "f67007bc-bc47-43f3-a36b-69e3ac4ceb90",
-    "URL_Login": "https://mis.kotaksecurities.com/login/1.0/tradeApiLogin",
-    "URL_Validate": "https://mis.kotaksecurities.com/login/1.0/tradeApiValidate",
-    "TRADING_TOKEN": "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzY29wZSI6WyJUcmFkZSJdLCJleHAiOjE3NjQ3ODY2MDAsImp0aSI6IjVkYTE3MDZkLTFiM2MtNGEzNy1iMjJmLTFjODE0NzI4YzAzNCIsImlhdCI6MTc2NDczNjQ1MywiaXNzIjoibG9naW4tc2VydmljZSIsInN1YiI6IjI1ZDM4MzBjLWQyMzItNGJlYi1hNzk0LWViYzBhY2NkMDNhNyIsInVjYyI6IldFRTU3IiwibmFwIjoiIiwieWNlIjoiZVlcXDYwKVx1MDAyNjVcdTAwM2NzXGJcblxmdFx1MDAwMFx1MDAxMGIiLCJmZXRjaGNhY2hpbmdydWxlIjowLCJjYXRlZ29yaXNhdGlvbiI6IiJ9.InrN3K8uJwKUzNrB14ogGTxXKw2J0QTVFSsZIwpMPqGcdGMjrZjsY8JfaXKHHVn4lZAhjuvldLZ2xe0zXhzmh-fiRUlEKIWqWYIb3AvYh3ADBSGGmGvAPih1OZMfMtgxihYJxvhMqCPRqOHcSspO0eeZrlKUPOsCd-zRKmFFTHmqdjw7lYUleJFoedZrdnnniQdAfr_UezVnq_PK2C7sZvtkndVAIM6jzeS-GYtD_CmlhjDe2_pZ4dVdv9FQ0CqthdeJjWS4ndxJ5AcTx2rIhKy1Or3ll8Qc241Cpdsfo7r0FdnS_ifgGDVra3eq9O3nbF4EqpCZtZaAfIaVQZ-EIA",
-    "TRADING_SID": "a189a46a-60e2-4906-9d73-09a65260d52f",
-    "BASE_URL": "https://mis.kotaksecurities.com",
-    "EXPIRY_TIME": 1764779654.7774959
+    "Expiry_Time_UPSTOX": 1765207074.252939,
+    "Access_Token_UPSTOX": "eyJ0eXAiOiJKV1QiLCJrZXlfaWQiOiJza192MS4wIiwiYWxnIjoiSFMyNTYifQ.eyJzdWIiOiI0R0FXWjciLCJqdGkiOiI2OTM2NDM1YTc0MjdkOTc2Y2E4OWE1OTciLCJpc011bHRpQ2xpZW50IjpmYWxzZSwiaXNQbHVzUGxhbiI6ZmFsc2UsImlhdCI6MTc2NTE2Mzg2NiwiaXNzIjoidWRhcGktZ2F0ZXdheS1zZXJ2aWNlIiwiZXhwIjoxNzY1MjMxMjAwfQ.e1wEKPvymmUX8EyrBkpyKSweRrFmbymdYaza0RvQszY"
 }

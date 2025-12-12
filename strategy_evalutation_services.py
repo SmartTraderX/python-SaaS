@@ -12,6 +12,8 @@ import threading
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, ".."))  # One level up
 sys.path.append(project_root)
+from strategies_adda import sma_rejection
+
 # from app.services.paper_trade_service import (create_paper_Order)
 # from app.services.strategy_service import (mark_symbol_match)
 # from app.models.strategy_model import Strategy
@@ -864,10 +866,10 @@ def Backtest_Worker_Testing(symbolName, strategy, results, lock):
     try:
         print(f"🔹 {symbolName}: Thread started")
 
-        timeframe = strategy['timeframe']
         ticker = f"{symbolName}.NS"
-        interval = intervals[timeframe]
-        data = yf.download(ticker, interval=timeframe, period=interval, progress=False)
+        timframe= "15m"
+        interval = intervals[timframe]
+        data = yf.download(ticker, interval=timframe, period=interval, progress=False)
 
         if data is None or data.empty:
             print(f"{symbolName}: Data empty")
@@ -914,33 +916,29 @@ def Backtest_Worker_Testing(symbolName, strategy, results, lock):
         for idx in range(start_index, len(data)):
             newData = data.iloc[:idx]
             close_price = newData['Close'].iloc[-1]
-            currentTime = data.index[idx]
+            currentTime = newData.index[-1]
 
             # --- Condition Evaluation ---
             signal = False
-            ok_volume = volumecheck(newData)
+        #     ok_volume = volumecheck(newData)
 
-        # ---- Extract Latest Candle ----
-            open_ = newData['Open'].iloc[-1]
-            close_ = newData['Close'].iloc[-1]
-            high = newData['High'].iloc[-1]
-            low = newData['Low'].iloc[-1]
+        # # ---- Extract Latest Candle ----
+        #     open_ = newData['Open'].iloc[-1]
+        #     close_ = newData['Close'].iloc[-1]
+        #     high = newData['High'].iloc[-1]
+        #     low = newData['Low'].iloc[-1]
+        #     prev_low = newData['Low'].iloc[-2]
+        #     prev_high = newData['High'].iloc[-2]
+        #         # ---- Candle Strength ----
+        #     body = abs(close_ - open_)
+        #     full = high - low
+        #     is_strong_body = full > 0 and body >= 0.5 * full and close_ < open_
 
-            prev_open = newData['Open'].iloc[-2]
-            prev_close = newData['Close'].iloc[-2]
-            prev_high = newData['High'].iloc[-2]
-            prev_low = newData['Low'].iloc[-2]
-
-                # ---- Candle Strength ----
-            body = abs(close_ - open_)
-            full = high - low
-            is_strong_body = full > 0 and body >= 0.5 * full
-
-                # ---- Indicators ----
-            rsi = float(tb.RSI(newData['Close'], timeperiod=14).iloc[-1])
-            sma20 = float(tb.SMA(newData['Close'], timeperiod=20).iloc[-1])
-            sma50 = float(tb.SMA(newData['Close'], timeperiod=50).iloc[-1])
-            sma200 = float(tb.SMA(newData['Close'], timeperiod=200).iloc[-1])
+        #         # ---- Indicators ----
+        #     rsi = float(tb.RSI(newData['Close'], timeperiod=14).iloc[-1])
+        #     sma20 = float(tb.SMA(newData['Close'], timeperiod=20).iloc[-1])
+        #     sma50 = float(tb.SMA(newData['Close'], timeperiod=50).iloc[-1])
+        #     sma200 = float(tb.SMA(newData['Close'], timeperiod=200).iloc[-1])
 
                 # ---- Proper Breakout Logic ----
             
@@ -949,8 +947,8 @@ def Backtest_Worker_Testing(symbolName, strategy, results, lock):
             # buy trend 
             # try:
             #     # ---------- STRATEGY 1: SWING + TREND + VOLUME ----------
-            # is_breakout = high > prev_high and prev_high > newData['High'].iloc[-3]
-                #   swing_low_value = swingLow(newData)
+            #     is_breakout = high > prev_high and prev_high > newData['High'].iloc[-3]
+            #     swing_low_value = swingLow(newData)
             #     if (
             #         swing_low_value is not None
             #         and is_strong_body
@@ -964,6 +962,7 @@ def Backtest_Worker_Testing(symbolName, strategy, results, lock):
             #     # ------------- STRATEGY 2: BREAKOUT + TREND + VOLUME -------------
             #     elif (
             #         ok_volume
+            #         # and sma20> sma50
             #         and sma50 > sma200
             #         and is_strong_body
             #         and is_breakout
@@ -979,51 +978,55 @@ def Backtest_Worker_Testing(symbolName, strategy, results, lock):
             # except Exception as cond_err:
             #         print(f"⚠️ {symbolName}: Condition evaluation error -> {cond_err}")
             # selltrend
-            try:
-                # ---------- STRATEGY 1: SWING + TREND + VOLUME ----------
-                is_breakout = low < prev_low and prev_low < data['Low'].iloc[-3]
-                swing_high_value = swingHigh(data)
-                if (
-                    swing_high_value is not None
-                    and is_strong_body
-                    and sma50 < sma200     # uptrend confirmation
-                    and rsi < 50
-                    and ok_volume
-                ):
-                    signal = True
-                    count += 1
+            # try:
+            #     # ---------- STRATEGY 1: SWING + TREND + VOLUME ----------
+            #     is_breakout = low < prev_low and prev_low < data['Low'].iloc[-3]
+            #     swing_high_value = swingHigh(data)
+            #     if (
+            #         swing_high_value is not None
+            #         and is_strong_body
+            #         and sma50 < sma200     # uptrend confirmation
+            #         and rsi < 50
+            #         and ok_volume
+            #     ):
+            #         signal = True
+            #         count += 1
 
-                # ------------- STRATEGY 2: BREAKOUT + TREND + VOLUME -------------
-                elif (
-                    ok_volume
-                    and sma50 < sma200
-                    and is_strong_body
-                    and is_breakout
-                ):
-                    signal = True
+            #     # ------------- STRATEGY 2: BREAKOUT + TREND + VOLUME -------------
+            #     elif (
+            #         ok_volume
+            #         and sma50 < sma200
+            #         and is_strong_body
+            #         and is_breakout
+            #     ):
+            #         signal = True
                     
-                        # obj = {
-                        #     # "newData":currentTime,
-                        #     "count" : count+1
-                        # }
-                    count += 1
-                        # signal_count.append(obj)
-            except Exception as cond_err:
-                    print(f"⚠️ {symbolName}: Condition evaluation error -> {cond_err}")        
+            #             # obj = {
+            #             #     # "newData":currentTime,
+            #             #     "count" : count+1
+            #             # }
+            #         count += 1
+            #             # signal_count.append(obj)
+            # except Exception as cond_err:
+            #         print(f"⚠️ {symbolName}: Condition evaluation error -> {cond_err}")        
 
             # --- ENTRY ---
 
             # print(f"sinal{signal} , pos {position}")
+
+            signal = sma_rejection(data=newData)
  
-            
             if signal and position is None:
+                # print("sma50",sma50)
+                # print("sma200",sma200)
                 atr = float(tb.ATR(newData['High'], newData['Low'], newData['Close'], timeperiod=14).iloc[-1])
                 entry_price = close_price
                 entry_time = currentTime
                 sl_buffer = 1
-                sl_price = newData['High'].iloc[-3] + 5
+                # sl_price = (swing_high_value + 7) if swing_high_value is not None else (newData['Low'].iloc[-3]+ 7)
+                sl_price = newData['Low'].iloc[-3]+ 7
                 # TP = entry price ka 2% upar
-                tp_price = entry_price - 10# fixed 10 point target
+                tp_price = entry_price - 15# fixed 10 point target
 
                 position = {
                     "type": "SELL",
@@ -1156,7 +1159,7 @@ strategy = {
     #   },
       {
         "id": "690767bade68b5e0109817c0",
-        "name": "RELIANCE",
+        "name": "TCS",
         "theStrategyMatch": False,
         "symbolCode": "2885"
       }
@@ -1170,7 +1173,7 @@ downtrend =["AXISBANK", "INFY", "TCS","SBIN", "RELIANCE", "HDFCBANK", "ICICIBANK
 
 def saveInJson(results):
     import json
-    symbolname = results[0]["symbol"]
+    symbolname = "NIFTY50_FUT"
     with open(f"result_{symbolname}.json","w") as f:
         json.dump({"results":results},f ,indent=4)
         print("save succesfully")

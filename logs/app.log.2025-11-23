@@ -1,5 +1,0 @@
-2025-11-23 21:28:59,243 - WARNING - apscheduler.executors.default- Run time of job "process_queue (trigger: cron[minute='*/15', second='0'], next run at: 2025-11-23 21:30:00 IST)" was missed by 0:13:59.243155
-2025-11-23 21:30:00,164 - INFO - apscheduler.executors.default- Running job "process_queue (trigger: cron[minute='*/15', second='0'], next run at: 2025-11-23 21:45:00 IST)" (scheduled at 2025-11-23 21:30:00+05:30)
-2025-11-23 21:30:00,758 - INFO - app.logger- [15m] Worker started.
-2025-11-23 21:30:09,437 - INFO - app.logger- [15m] Processed strategies.
-2025-11-23 21:30:09,437 - INFO - apscheduler.executors.default- Job "process_queue (trigger: cron[minute='*/15', second='0'], next run at: 2025-11-23 21:45:00 IST)" executed successfully

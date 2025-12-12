@@ -1,0 +1,41 @@
+{
+    "results": [
+        {
+            "symbol": "TCS",
+            "metrices": {
+                "total_trades": 2,
+                "sinal_count": 0,
+                "winning_trades": 2,
+                "losing_trades": 0,
+                "winning_pnl": -30.0,
+                "losing_pnl": 0,
+                "total_pnl": -30.0,
+                "win_rate": 100.0
+            },
+            "trades": [
+                {
+                    "type": "SELL",
+                    "entry_price": 3168.89990234375,
+                    "entry_time": "2025-12-11 09:30:00+05:30",
+                    "sl_price": 3192.0,
+                    "tp_price": 3153.89990234375,
+                    "exit_price": 3168.89990234375,
+                    "exit_time": "2025-12-11 09:45:00+05:30",
+                    "exit_reason": "TP Hit",
+                    "pnl": -15.0
+                },
+                {
+                    "type": "SELL",
+                    "entry_price": 2957.699951171875,
+                    "entry_time": "2025-10-15 09:45:00+05:30",
+                    "sl_price": 2969.10009765625,
+                    "tp_price": 2942.699951171875,
+                    "exit_price": 2956.39990234375,
+                    "exit_time": "2025-10-15 10:00:00+05:30",
+                    "exit_reason": "TP Hit",
+                    "pnl": -15.0
+                }
+            ]
+        }
+    ]
+}
