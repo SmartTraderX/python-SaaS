@@ -154,7 +154,7 @@ def place_Order(symbol, qty, order_type="B", price_type="MKT", limit_price="0", 
             "tt": order_type
         }
 
-        # 🔥 KOTAK requires jData AS PLAIN STRING
+        #  KOTAK requires jData AS PLAIN STRING
         body = f"jData={json.dumps(jdata)}"
 
         headers = {
@@ -176,7 +176,17 @@ def place_Order(symbol, qty, order_type="B", price_type="MKT", limit_price="0", 
         return False
 
 
-def place_future_Order(symbol, qty, order_type="B", price_type="MKT", limit_price="0", product="CNC" ):
+futureSymbolMap = {
+    "RELIANCE" : {"name":"RELIANCE25DECFUT","lot":"500"},
+    "AXISBANK" : {"name":"AXISBANK25DECFUT","lot":"625"},
+    "SBIN" :     {"name":"SBIN25DECFUT","lot":"750"},
+    "HDFCBANK" : {"name":"HDFCBANK25DECFUT","lot":"550"},
+    "INFY" : {"name":"INFY25DECFUT","lot":"400"},
+    "ICICIBANK" : {"name":"ICICIBANK25DECFUT","lot":"700"},
+}
+
+
+def place_future_order(symbol="SBIN", qty=100, order_type="B", price_type="MKT", limit_price="0"):
     try:
         with open(file_loc, "r") as f:
             data = json.load(f)
@@ -184,36 +194,35 @@ def place_future_Order(symbol, qty, order_type="B", price_type="MKT", limit_pric
         BASE_URL = data.get("BASE_URL")
         TOKEN = data.get("TRADING_TOKEN")
         SID = data.get("TRADING_SID")
-        EXPIRY_TIME  = data.get("EXPIRY_TIME")
-        current_time = time.time()
+        EXPIRY_TIME = data.get("EXPIRY_TIME")
 
-        if not TOKEN or not SID or not EXPIRY_TIME or current_time > EXPIRY_TIME:
+        if not TOKEN or not SID or time.time() > EXPIRY_TIME:
             login_data = login()
             BASE_URL = login_data["BASE_URL"]
             TOKEN = login_data["TRADING_TOKEN"]
             SID = login_data["TRADING_SID"]
 
-        symbol = format_symbol(symbol, product)    
+        #  RELIANCE FUT SYMBOL
+        symbol =futureSymbolMap[symbol]
 
         url = f"{BASE_URL}/quick/order/rule/ms/place"
 
         jdata = {
             "am": "NO",
             "dq": "0",
-            "es": "nse_cm",
+            "es": "nse_fo",          #  Futures segment
             "mp": limit_price,
-            "pc": product,
+            "pc": "NRML",            #  Futures product
             "pf": "N",
             "pr": "0",
-            "pt": price_type,
-            "qt": str(qty),
+            "pt": price_type,        # MKT / LMT
+            "qt": str(symbol["lot"]),
             "rt": "DAY",
             "tp": "0",
-            "ts": symbol,
-            "tt": order_type
+            "ts": symbol["name"],
+            "tt": order_type         # B / S
         }
 
-        # 🔥 KOTAK requires jData AS PLAIN STRING
         body = f"jData={json.dumps(jdata)}"
 
         headers = {
@@ -223,20 +232,20 @@ def place_future_Order(symbol, qty, order_type="B", price_type="MKT", limit_pric
             "Content-Type": "application/x-www-form-urlencoded"
         }
 
-        print("\nFINAL BODY SENT →", body)
+        print("FINAL BODY:", body)
 
         res = requests.post(url, data=body, headers=headers)
+        print("Order Response:", res.text)
 
-        print("\nOrder Response:", res.text)
-        return True
+        return res.text
 
     except Exception as e:
-        print("Error:", str(e))
-        return False
+        print("Error:", e)
+        return None
 
-# result =place_Order("RELIANCE" ,10000 , "S")
+result =place_future_order(order_type="S")
 
-# print("result ",result)
+print("result ",result)
 
 # login()
 # # ts = Trading Symbol
