@@ -1,0 +1,103 @@
+{
+    "results": {
+        "symbol": "ICICIBANK",
+        "metrices": {
+            "initial_capital": 100000,
+            "final_capital": 100341.15,
+            "total_trades": 6,
+            "signal_count": 6,
+            "winning_trades": 3,
+            "losing_trades": 3,
+            "winning_pnl": 3300.0,
+            "losing_pnl": -2958.85,
+            "total_pnl": 341.15,
+            "win_rate": 50.0
+        },
+        "trades": [
+            {
+                "id": "efd11aec-2c20-4d20-a418-17b5a3a1eae8",
+                "type": "BUY",
+                "qty": 96,
+                "entry_price": 963.6,
+                "entry_time": "2025-12-12 15:00:00+05:30",
+                "sl_price": 953.4,
+                "tp_price": 978.6,
+                "exit_price": 976.0,
+                "exit_time": "2025-12-18 09:15:00+05:30",
+                "exit_reason": "TP Hit",
+                "pnl": 1440.0,
+                "capital_after_trade": 100341.15
+            },
+            {
+                "id": "2d811c27-b66d-48cb-beba-35370490906a",
+                "type": "BUY",
+                "qty": 55,
+                "entry_price": 993.0,
+                "entry_time": "2025-11-26 09:30:00+05:30",
+                "sl_price": 975.2,
+                "tp_price": 1008.0,
+                "exit_price": 975.0,
+                "exit_time": "2025-11-27 11:45:00+05:30",
+                "exit_reason": "SL Hit",
+                "pnl": -979.0,
+                "capital_after_trade": 98901.15
+            },
+            {
+                "id": "a0977fb1-fe8d-4a0f-a625-8be21ea1767d",
+                "type": "BUY",
+                "qty": 62,
+                "entry_price": 976.9,
+                "entry_time": "2025-11-25 09:30:00+05:30",
+                "sl_price": 961.05,
+                "tp_price": 991.9,
+                "exit_price": 993.0,
+                "exit_time": "2025-11-26 09:30:00+05:30",
+                "exit_reason": "TP Hit",
+                "pnl": 930.0,
+                "capital_after_trade": 99880.15
+            },
+            {
+                "id": "f56af57c-d40e-4331-b39d-2da6bf0d4f48",
+                "type": "BUY",
+                "qty": 62,
+                "entry_price": 960.1,
+                "entry_time": "2025-11-13 09:30:00+05:30",
+                "sl_price": 944.4,
+                "tp_price": 975.1,
+                "exit_price": 973.7,
+                "exit_time": "2025-11-17 09:15:00+05:30",
+                "exit_reason": "TP Hit",
+                "pnl": 930.0,
+                "capital_after_trade": 98950.15
+            },
+            {
+                "id": "8824c28a-bd40-4169-b80c-46705e0e434e",
+                "type": "BUY",
+                "qty": 97,
+                "entry_price": 940.7,
+                "entry_time": "2025-10-29 14:45:00+05:30",
+                "sl_price": 930.5,
+                "tp_price": 955.7,
+                "exit_price": 939.25,
+                "exit_time": "2025-10-31 09:15:00+05:30",
+                "exit_reason": "SL Hit",
+                "pnl": -989.4,
+                "capital_after_trade": 98020.15
+            },
+            {
+                "id": "35287d44-88c9-43b9-84b5-83ba4fbe4c02",
+                "type": "BUY",
+                "qty": 93,
+                "entry_price": 915.55,
+                "entry_time": "2025-10-23 11:00:00+05:30",
+                "sl_price": 904.9,
+                "tp_price": 930.55,
+                "exit_price": 905.0,
+                "exit_time": "2025-10-24 10:15:00+05:30",
+                "exit_reason": "SL Hit",
+                "pnl": -990.45,
+                "capital_after_trade": 99009.55
+            }
+        ]
+    }
+}

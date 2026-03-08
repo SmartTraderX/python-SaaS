@@ -87,31 +87,31 @@ def swingLow(data, window=2):
 # ====================================================================
 #                     LONG (BUY) STRATEGY FUNCTION
 # ====================================================================
-async def swingLow_volume_trend_rsi_buy(symbol="SBIN", timeframe="15m"):
+def swingLow_volume_trend_rsi_buy(data):
     try:
-        ticker = f"{symbol}.NS"
-        interval = intervals[timeframe]
-        data = yf.download(ticker, interval=timeframe, period=interval, progress=False)
+        # ticker = f"{symbol}.NS"
+        # interval = intervals[timeframe]
+        # data = yf.download(ticker, interval=timeframe, period=interval, progress=False)
 
-        if data is None or data.empty:
-            print(f"{symbol}: Data empty")
-            return
+        # if data is None or data.empty:
+        #     print(f"{symbol}: Data empty")
+        #     return
 
-        # Fix MultiIndex columns
-        data = fix_yf_multiindex(data)
+        # # Fix MultiIndex columns
+        # data = fix_yf_multiindex(data)
 
-        # Fix timezone
-        if data.index.tz is None:
-            data.index = data.index.tz_localize("UTC").tz_convert("Asia/Kolkata")
-        else:
-            data.index = data.index.tz_convert("Asia/Kolkata")
+        # # Fix timezone
+        # if data.index.tz is None:
+        #     data.index = data.index.tz_localize("UTC").tz_convert("Asia/Kolkata")
+        # else:
+        #     data.index = data.index.tz_convert("Asia/Kolkata")
 
-        currentime =  datetime.now()
-        data = data.iloc[:-1]  # remove running candle
+        # currentime =  datetime.now()
+        # data = data.iloc[:-1]  # remove running candle
 
-        print(f"\n=== {symbol} ===")
+        # print(f"\n=== {symbol} ===")
 
-        print(data.tail(3))
+        # print(data.tail(3))
 
         # -------- Volume --------
         ok_volume = volumecheck(data)
@@ -153,26 +153,29 @@ async def swingLow_volume_trend_rsi_buy(symbol="SBIN", timeframe="15m"):
         if (
             sl is not None
             and is_strong
-            and sma20 > sma50 > sma200
-            and rsi > 50
+            and sma50 > sma200
+            and rsi > 55
             and ok_volume
+            and is_breakout
         ):
             signal = True
 
         # STRATEGY 2
-        elif ok_volume and sma50 > sma200 and is_strong and is_breakout:
-            signal = True
+        # elif ok_volume and sma50 > sma200 and is_strong and is_breakout:
+            # signal = True
+
+        # print(signal)    
 
         if signal:
             # sl  = data['low'].iloc[-3] + 5
             # tp  = c + 10
-            place_Order(symbol,2,"B")
-            print(f"BUY SIGNAL for {symbol}")
+            return True
         else:
-            print(f"No Buy signal for {symbol}")
+            return False
 
     except Exception as e:
         print("Error:", e)
+        return False
 
 # ====================================================================
 #                     SHORT (SELL) STRATEGY FUNCTION
@@ -305,11 +308,11 @@ async def start_scheduler():
     CronTrigger(minute="*/15", second=10)
         )
     
-    scheduler.add_job(
-        lambda loop=asyncio.get_running_loop():
-            loop.create_task(run_all_strategies("1h")),
-        CronTrigger(hour="9,10,11,12,13,14,15", minute=15, second=10)
-    )
+    # scheduler.add_job(
+    #     lambda loop=asyncio.get_running_loop():
+    #         loop.create_task(run_all_strategies("1h")),
+    #     CronTrigger(hour="9,10,11,12,13,14,15", minute=15, second=10)
+    # )
 
     # scheduler.add_job(process_queue, IntervalTrigger(minutes=60), args=["1h"])
     scheduler.start()
@@ -317,5 +320,5 @@ async def start_scheduler():
     await asyncio.Event().wait()
  
 
-if __name__ == "__main__":
-    asyncio.run(start_scheduler())
+# if __name__ == "__main__":
+#     asyncio.run(start_scheduler())

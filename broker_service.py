@@ -243,9 +243,9 @@ def place_future_order(symbol="SBIN", qty=100, order_type="B", price_type="MKT",
         print("Error:", e)
         return None
 
-result =place_future_order(order_type="S")
+# result =place_future_order(order_type="S")
 
-print("result ",result)
+# print("result ",result)
 
 # login()
 # # ts = Trading Symbol

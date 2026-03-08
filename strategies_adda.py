@@ -39,7 +39,7 @@ def smaRejection(data, smavalue):
     # Rejection logic:
     # Pehli 2 candles SMA ke upar ho sakti hai
     # Last candle SMA ke niche close ho → bearish rejection
-    if (third > smavalue or second > smavalue) and first < smavalue:
+    if (third < smavalue or second < smavalue) and first > smavalue:
         return True
     
     return False
@@ -71,7 +71,7 @@ def sma_rejection(data):
         return False
 
     # --- Trend check ---
-    downtrend = sma20_last < sma50_last < sma200_last
+    downtrend =  sma50_last > sma200_last
 
     # --- Rejection check ---
     rejection = smaRejection(data=data, smavalue=sma20_last)
