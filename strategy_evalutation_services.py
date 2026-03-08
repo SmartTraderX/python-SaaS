@@ -1,15 +1,10 @@
-import operator
 import sys
 import os
 import numpy as np
 import pandas as pd
 import talib as  tb
-import yfinance as yf
-import asyncio
 from datetime import datetime
 import uuid
-import logging
-import threading
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, ".."))  # One level up
 sys.path.append(project_root)
@@ -96,8 +91,8 @@ def Backtest_Worker_Testing_sync(symbolName, strategy):
     try:
         print(f"🔹 {symbolName}: Worker started")
 
-        data = pd.read_csv("data.csv", parse_dates=["datetime"])
-        data.set_index("datetime", inplace=True)
+        data = pd.read_parquet("NSE_SBIN-EQ_15.parquet")
+        data = data.set_index(pd.to_datetime(data["datetime"]))
 
         print(data.head())
 

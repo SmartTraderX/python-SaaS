@@ -89,29 +89,6 @@ def swingLow(data, window=2):
 # ====================================================================
 def swingLow_volume_trend_rsi_buy(data):
     try:
-        # ticker = f"{symbol}.NS"
-        # interval = intervals[timeframe]
-        # data = yf.download(ticker, interval=timeframe, period=interval, progress=False)
-
-        # if data is None or data.empty:
-        #     print(f"{symbol}: Data empty")
-        #     return
-
-        # # Fix MultiIndex columns
-        # data = fix_yf_multiindex(data)
-
-        # # Fix timezone
-        # if data.index.tz is None:
-        #     data.index = data.index.tz_localize("UTC").tz_convert("Asia/Kolkata")
-        # else:
-        #     data.index = data.index.tz_convert("Asia/Kolkata")
-
-        # currentime =  datetime.now()
-        # data = data.iloc[:-1]  # remove running candle
-
-        # print(f"\n=== {symbol} ===")
-
-        # print(data.tail(3))
 
         # -------- Volume --------
         ok_volume = volumecheck(data)
@@ -138,7 +115,7 @@ def swingLow_volume_trend_rsi_buy(data):
 
         # Safety
         if any(pd.isna(x) for x in [rsi, sma20, sma50, sma200]):
-            print(f"{symbol}: Indicator NaN — skipping")
+            print(f": Indicator NaN — skipping")
             return
 
         # -------- Breakout --------
@@ -156,7 +133,7 @@ def swingLow_volume_trend_rsi_buy(data):
             and sma50 > sma200
             and rsi > 55
             and ok_volume
-            and is_breakout
+            # and is_breakout
         ):
             signal = True
 

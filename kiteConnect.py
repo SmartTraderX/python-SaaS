@@ -2,9 +2,9 @@ from fyers_apiv3 import fyersModel
 import webbrowser
 import os
 import json
-import time
-from datetime import datetime
+from datetime import datetime, timedelta
 import pandas as pd
+
 
 # ================= CONFIG =================
 CLIENT_ID = "JDW5YNOJ7Q-100"
@@ -93,7 +93,78 @@ def convert_to_df(hist):
 
     return df
 # ================= MAIN =================
-if __name__ == "__main__":
+
+def download_fyers_data(
+        fyers,
+        symbol,
+        timeframe="15",
+        start_date="2021-01-01",
+        end_date="2026-01-01",
+        chunk_days=90,
+        save_file=True):
+
+    start_date = datetime.strptime(start_date, "%Y-%m-%d")
+    end_date = datetime.strptime(end_date, "%Y-%m-%d")
+
+    all_data = []
+    current_start = start_date
+
+    while current_start < end_date:
+
+        current_end = current_start + timedelta(days=chunk_days)
+
+        if current_end > end_date:
+            current_end = end_date
+
+        try:
+            hist = get_historical_data(
+                fyers,
+                symbol,
+                timeframe,
+                current_start.strftime("%Y-%m-%d"),
+                current_end.strftime("%Y-%m-%d")
+            )
+
+            # API response check
+            if not hist or 'candles' not in hist or not hist['candles']:
+                print(f"⚠ No candles {current_start.date()} → {current_end.date()} | Response: {hist}")
+            else:
+
+                df = pd.DataFrame(
+                    hist["candles"],
+                    columns=["datetime","Open","High","Low","Close","Volume"]
+                )
+
+                df["datetime"] = pd.to_datetime(df["datetime"], unit="s")
+                df["datetime"] = df["datetime"].dt.tz_localize("UTC").dt.tz_convert("Asia/Kolkata")
+
+                if not df.empty:
+                    all_data.append(df)
+
+                print(f"✅ Downloaded {current_start.date()} → {current_end.date()}")
+
+        except Exception as e:
+            print(f"❌ Error {current_start.date()} → {current_end.date()} : {e}")
+
+        current_start = current_end + timedelta(days=1)
+
+    if not all_data:
+        print("⚠ No data fetched")
+        return None
+
+    final_df = pd.concat(all_data)
+
+    final_df = final_df.drop_duplicates()
+    final_df = final_df.sort_values("datetime")
+
+    if save_file:
+        filename = f"{symbol.replace(':','_')}_{timeframe}.parquet"
+        final_df.to_parquet(filename)
+        print(f"💾 Saved to {filename}")
+
+    return final_df
+# if __name__ == "__main__":
+
 
     # 🔁 First time login
   
@@ -103,25 +174,33 @@ if __name__ == "__main__":
     #     exit(0)
 
     # # 🔑 Generate / Refresh access token
-    # # generate_login_url()
+    # generate_login_url()
     # auth_code = read_auth_code()
     # access_token = generate_access_token(auth_code)
     # save_access_token(access_token)
 
     # 🚀 Init FYERS
     # generate_login_url()
-    fyers = init_fyers()
+    # fyers = init_fyers()
 
-    hist = get_historical_data(
-            fyers,
-            "NSE:SBIN-EQ",
-            "15",
-            "2025-09-23",
-            "2026-01-01"
-        )
 
-    df = convert_to_df(hist)
+    # hist = get_historical_data(
+    #         fyers,
+    #         "NSE:SBIN-EQ",
+    #         "15",
+    #         "2025-09-23",
+    #         "2026-01-01"
+    #     )
 
-    df.to_csv("data.csv", index=False)
+    # df = download_fyers_data(
+    #             fyers,
+    #             symbol="NSE:SBIN-EQ",
+    #             timeframe="15"
+    #         )
+
+    # df.to_csv("data.csv", index=False)
+    # data = pd.read_parquet("NSE_SBIN-EQ_15.parquet")
+    # print(data)
+
 
     # 📊 Historical
