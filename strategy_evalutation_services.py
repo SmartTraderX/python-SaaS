@@ -15,6 +15,8 @@ project_root = os.path.abspath(os.path.join(current_dir, ".."))  # One level up
 sys.path.append(project_root)
 from strategies_adda import sma_rejection
 from swing_trend_volume import swingLow_volume_trend_rsi_buy
+import uuid
+import yfinance as yf
 
 # from app.services.paper_trade_service import (create_paper_Order)
 # from app.services.strategy_service import (mark_symbol_match)
@@ -89,8 +91,7 @@ def saveInJson(results):
         json.dump({"results":results},f ,indent=4)
         print("save succesfully")
 
-import uuid
-import yfinance as yf
+
 def Backtest_Worker_Testing_sync(symbolName, strategy):
     try:
         print(f"🔹 {symbolName}: Worker started")
