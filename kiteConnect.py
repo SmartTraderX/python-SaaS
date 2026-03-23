@@ -98,7 +98,7 @@ def download_fyers_data(
         fyers,
         symbol,
         timeframe="15",
-        start_date="2021-01-01",
+        start_date="2015-01-01",
         end_date="2026-01-01",
         chunk_days=90,
         save_file=True):
@@ -163,7 +163,7 @@ def download_fyers_data(
         print(f"💾 Saved to {filename}")
 
     return final_df
-# if __name__ == "__main__":
+if __name__ == "__main__":
 
 
     # 🔁 First time login
@@ -181,7 +181,7 @@ def download_fyers_data(
 
     # 🚀 Init FYERS
     # generate_login_url()
-    # fyers = init_fyers()
+    fyers = init_fyers()
 
 
     # hist = get_historical_data(
@@ -192,15 +192,15 @@ def download_fyers_data(
     #         "2026-01-01"
     #     )
 
-    # df = download_fyers_data(
-    #             fyers,
-    #             symbol="NSE:SBIN-EQ",
-    #             timeframe="15"
-    #         )
+    df = download_fyers_data(
+                fyers,
+                symbol="NSE:ADANIENT-EQ",
+                timeframe="30"
+            )
 
-    # df.to_csv("data.csv", index=False)
-    # data = pd.read_parquet("NSE_SBIN-EQ_15.parquet")
-    # print(data)
+    df.to_csv("data.csv", index=False)
+    data = pd.read_parquet("NSE_ADANIENT-EQ_30.parquet")
+    print(data)
 
 
     # 📊 Historical

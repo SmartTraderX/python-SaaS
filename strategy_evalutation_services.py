@@ -82,7 +82,7 @@ downtrend =["AXISBANK", "INFY", "TCS","SBIN", "RELIANCE", "HDFCBANK", "ICICIBANK
 def saveInJson(results):
     import json
     symbolname = "SBIN"
-    with open(f"result_{symbolname}.json","w") as f:
+    with open(f"NSE_HDFCBANK-EQ_15.json","w") as f:
         json.dump({"results":results},f ,indent=4)
         print("save succesfully")
 
@@ -91,7 +91,7 @@ def Backtest_Worker_Testing_sync(symbolName, strategy):
     try:
         print(f"🔹 {symbolName}: Worker started")
 
-        data = pd.read_parquet("NSE_SBIN-EQ_15.parquet")
+        data = pd.read_parquet("NSE_HDFCBANK-EQ_15.parquet")
         data = data.set_index(pd.to_datetime(data["datetime"]))
 
         print(data.head())
@@ -112,6 +112,8 @@ def Backtest_Worker_Testing_sync(symbolName, strategy):
 
         positions = []
         backtestResults = []
+        equity_curve = []
+        equity_curve.append(100000)
 
         winning_pnl = losing_pnl = 0.0
         winning_trades = losing_trades = 0
@@ -199,6 +201,7 @@ def Backtest_Worker_Testing_sync(symbolName, strategy):
                         "pnl": round(pnl, 2),
                         "capital_after_trade": round(capital, 2)
                     })
+                    equity_curve.append(capital)
 
                     backtestResults.append(pos)
 
@@ -216,21 +219,75 @@ def Backtest_Worker_Testing_sync(symbolName, strategy):
 
         # ===== METRICS =====
         total_trades = len(backtestResults)
+        total_trades = len(backtestResults)
+
+        avg_win = winning_pnl / winning_trades if winning_trades else 0
+        avg_loss = losing_pnl / losing_trades if losing_trades else 0
+
+        profit_factor = winning_pnl / abs(losing_pnl) if losing_pnl != 0 else 0
+
+        risk_reward = abs(avg_win / avg_loss) if avg_loss != 0 else 0
+
+        win_rate = (winning_trades / total_trades) if total_trades else 0
+        loss_rate = 1 - win_rate
+
+        expectancy = (win_rate * avg_win) + (loss_rate * avg_loss)
+
+        equity = pd.Series(equity_curve)
+        rolling_max = equity.cummax()
+        drawdown = (equity - rolling_max) / rolling_max
+
+        max_drawdown = abs(drawdown.min() * 100)
 
         metrices = {
+
             "initial_capital": 100000,
             "final_capital": round(capital, 2),
+
+            "max_drawdown":max_drawdown,
+            # "equity_curve":equity_curve,           
+
             "total_trades": total_trades,
             "signal_count": signal_count,
+
             "winning_trades": winning_trades,
             "losing_trades": losing_trades,
+
             "winning_pnl": round(winning_pnl, 2),
             "losing_pnl": round(losing_pnl, 2),
+
             "total_pnl": round(winning_pnl + losing_pnl, 2),
-            "win_rate": round(
-                (winning_trades / total_trades) * 100, 2
-            ) if total_trades else 0.0
+
+            "win_rate": round(win_rate * 100, 2),
+
+            "avg_win": round(avg_win, 2),
+            "avg_loss": round(avg_loss, 2),
+
+            "profit_factor": round(profit_factor, 2),
+
+            "risk_reward": round(risk_reward, 2),
+
+            "expectancy": round(expectancy, 2)
         }
+
+        # metrices = {
+        #     "profit_factor" : winning_pnl / abs(losing_pnl) if losing_pnl != 0 else 0,
+        #     "avg_win" : winning_pnl / winning_trades if winning_trades else 0,
+        #      "avg_loss" : losing_pnl / losing_trades if losing_trades else 0,
+        #     "initial_capital": 100000,
+        #     "final_capital": round(capital, 2),
+        #     "total_trades": total_trades,
+        #     "signal_count": signal_count,
+        #     "winning_trades": winning_trades,
+        #     "losing_trades": losing_trades,
+        #     "winning_pnl": round(winning_pnl, 2),
+        #     "losing_pnl": round(losing_pnl, 2),
+        #     "total_pnl": round(winning_pnl + losing_pnl, 2),
+        #     "win_rate": round(
+        #         (winning_trades / total_trades) * 100, 2
+        #     ) if total_trades else 0.0,
+            
+        # }
 
         print(f"✅ {symbolName}: Done | Trades={total_trades} | Final Capital={capital:.2f}")
 
@@ -250,7 +307,7 @@ def Backtest_Worker_Testing_sync(symbolName, strategy):
         }
 if __name__ == "__main__":
 
-    results = Backtest_Worker_Testing_sync("ICICIBANK",strategy)
+    results = Backtest_Worker_Testing_sync("HDFCBANK",strategy)
     saveInJson(results)
     print(results)
 
