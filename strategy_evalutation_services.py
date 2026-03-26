@@ -260,13 +260,13 @@ def Backtest_Worker_Testing_sync(symbolName):
         }
 if __name__ == "__main__":
 
-    # results = Backtest_Worker_Testing_sync("HDFCBANK")
-    # saveInJson(results)
-    # print(results)
+    results = Backtest_Worker_Testing_sync("HDFCBANK")
+    saveInJson(results)
+    print(results)
     
-    data = pd.read_parquet("60_data/NSE_HDFCBANK-EQ_60.parquet")
-    print(len(data))
-    print(data)
+    # data = pd.read_parquet("60_data/NSE_HDFCBANK-EQ_60.parquet")
+    # print(len(data))
+    # print(data)
     
     
 

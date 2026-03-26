@@ -89,6 +89,9 @@ def swingLow(data, window=2):
 # ====================================================================
 
 def check_market_trend(data):
+    if data is None:
+        print("Datanone")
+        return "SIDEWAYS"
     if len(data) < 150:
         print("Too short to find market trend")
         return None
@@ -273,10 +276,19 @@ def swingHigh_volume_trend_rsi_buy(data):
         return False
     
 def generateSignal(dataforTrade, dataForTrend=None):
-    if swingLow(dataforTrade) is not None:
-        return "BUY"
-    elif swingHigh(dataforTrade) is not None:
-        return "SELL"
+    if dataForTrend is None:
+        return None
+
+    trend = check_market_trend(dataForTrend)
+
+    if trend == "STRONG_UPTREND":
+        if swingLow_volume_trend_rsi_buy(dataforTrade):
+            return "BUY"
+
+    elif trend == "STRONG_DOWNTREND":
+        if swingHigh_volume_trend_rsi_buy(dataforTrade):
+            return "SELL"
+
     return None
 # scheduler startup function (unchanged)
 async def start_scheduler():
