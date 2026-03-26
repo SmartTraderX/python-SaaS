@@ -87,6 +87,67 @@ def swingLow(data, window=2):
 # ====================================================================
 #                     LONG (BUY) STRATEGY FUNCTION
 # ====================================================================
+import talib as ta
+
+def check_market_trend(data):
+    if len(data) < 150:
+        print("Too short to find market trend")
+        return None
+
+    close = data["Close"]
+
+    ema50 = ta.EMA(close, timeperiod=50)
+    ema200 = ta.EMA(close, timeperiod=200)
+
+    current_price = close.iloc[-1]
+
+    if current_price > ema50.iloc[-1] > ema200.iloc[-1]:
+        return "STRONG_UPTREND"
+    
+    elif current_price < ema50.iloc[-1] < ema200.iloc[-1]:
+        return "STRONG_DOWNTREND"
+    
+    else:
+        return "SIDEWAYS"
+    
+def check_range_market(data, window=50, threshold=0.02):
+    if len(data) < window:
+        return None
+
+    recent = data[-window:]
+
+    high = recent["High"].max()
+    low = recent["Low"].min()
+
+    range_percent = (high - low) / low
+
+    if range_percent < threshold:
+        return "RANGE_BOUND"
+    
+    return "TRENDING"
+
+def check_volatility(data, period=14):
+    if len(data) < period:
+        return None
+
+    atr = ta.ATR(
+        data["High"],
+        data["Low"],
+        data["Close"],
+        timeperiod=period
+    )
+
+    current_atr = atr.iloc[-1]
+    price = data["Close"].iloc[-1]
+
+    volatility_percent = current_atr / price
+
+    if volatility_percent > 0.02:
+        return "HIGH_VOLATILITY"
+    elif volatility_percent < 0.01:
+        return "LOW_VOLATILITY"
+    else:
+        return "NORMAL_VOLATILITY"    
 def swingLow_volume_trend_rsi_buy(data):
     try:
 

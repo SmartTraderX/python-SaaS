@@ -9,7 +9,8 @@ import pandas as pd
 # ================= CONFIG =================
 CLIENT_ID = "JDW5YNOJ7Q-100"
 SECRET_KEY = "KFT2BXKQCZ"
-REDIRECT_URI = "https://suturally-interconfessional-sherise.ngrok-free.dev/zerodha/callback"
+# REDIRECT_URI = "https://suturally-interconfessional-sherise.ngrok-free.dev/zerodha/callback"
+REDIRECT_URI = "https://047d-2405-201-5c06-81b9-786e-3f2b-1332-9289.ngrok-free.app/zerodha/callback"
 
 RESPONSE_TYPE = "code"
 GRANT_TYPE = "authorization_code"
@@ -93,14 +94,14 @@ def convert_to_df(hist):
 
     return df
 # ================= MAIN =================
-
+import time
 def download_fyers_data(
         fyers,
         symbol,
         timeframe="15",
         start_date="2015-01-01",
         end_date="2026-01-01",
-        chunk_days=90,
+        chunk_days=30,
         save_file=True):
 
     start_date = datetime.strptime(start_date, "%Y-%m-%d")
@@ -158,49 +159,35 @@ def download_fyers_data(
     final_df = final_df.sort_values("datetime")
 
     if save_file:
-        filename = f"{symbol.replace(':','_')}_{timeframe}.parquet"
+        os.makedirs(f"{timeframe}_data", exist_ok=True)
+        filename = f"{timeframe}_data/{symbol.replace(':','_')}_{timeframe}.parquet"
         final_df.to_parquet(filename)
         print(f"💾 Saved to {filename}")
 
     return final_df
+
+symbols = [
+    "HDFCBANK",
+    # "ICICIBANK",
+    # "SBIN",
+    # "RELIANCE",
+    # "INFY",
+    # "TCS",
+    # "TATAMOTORS",
+    # "ADANIENT",
+    # "ITC"
+]
+
 if __name__ == "__main__":
-
-
-    # 🔁 First time login
-  
-    # if not os.path.exists(AUTH_CODE_FILE):
-    #     generate_login_url()
-    #     print("\n👉 Login completed → auth_code Flask callback me save hoga")
-    #     exit(0)
-
-    # # 🔑 Generate / Refresh access token
-    # generate_login_url()
-    # auth_code = read_auth_code()
-    # access_token = generate_access_token(auth_code)
-    # save_access_token(access_token)
-
-    # 🚀 Init FYERS
+    
     # generate_login_url()
     fyers = init_fyers()
 
+    for i in symbols:
 
-    # hist = get_historical_data(
-    #         fyers,
-    #         "NSE:SBIN-EQ",
-    #         "15",
-    #         "2025-09-23",
-    #         "2026-01-01"
-    #     )
-
-    df = download_fyers_data(
-                fyers,
-                symbol="NSE:ADANIENT-EQ",
-                timeframe="30"
-            )
-
-    df.to_csv("data.csv", index=False)
-    data = pd.read_parquet("NSE_ADANIENT-EQ_30.parquet")
-    print(data)
-
-
-    # 📊 Historical
+        download_fyers_data(
+            fyers,
+            symbol=f"NSE:{i}-EQ",
+            timeframe="60"
+        )
+        time.sleep(2)
