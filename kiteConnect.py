@@ -148,6 +148,8 @@ def download_fyers_data(
             print(f"❌ Error {current_start.date()} → {current_end.date()} : {e}")
 
         current_start = current_end + timedelta(days=1)
+        
+        time.sleep(2)
 
     if not all_data:
         print("⚠ No data fetched")

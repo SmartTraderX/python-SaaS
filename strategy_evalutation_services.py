@@ -9,9 +9,11 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.abspath(os.path.join(current_dir, ".."))  # One level up
 sys.path.append(project_root)
 from strategies_adda import sma_rejection
-from swing_trend_volume import swingLow_volume_trend_rsi_buy
+from swing_trend_volume import generateSignal
 import uuid
 import yfinance as yf
+
+os.makedirs("results",exist_ok=True)
 
 # from app.services.paper_trade_service import (create_paper_Order)
 # from app.services.strategy_service import (mark_symbol_match)
@@ -32,69 +34,143 @@ intervals = {
     "15m":"60d",
     "1h":"730d"
 }
-strategy = {
-  "_id": "690767bade68b5e0109817c1",
-  "userId": None,
-  "strategyName": "Testing strategy",
-  "category": "Swing",
-  "description": "testing ",
-  "timeframe": "15m",
-  "status": False,
-  "associatedBroker": None,
-  "createdBy": None,
-  "createdAt": "2025-11-02T19:05:08.732000",
-  "expiryDate": "2025-11-09T19:05:08.732000",
-  "orderDetails": {
-    "action": "BUY",
-    "symbol": [
-    #     {
-    #     "id": "690767bade68b5e0109817bf",
-    #     "name": "TCS",
-    #     "theStrategyMatch": False,
-    #     "symbolCode": "3045"
-    #   },
-    #   {
-    #     "id": "690767bade68b5e0109817bf",
-    #     "name": "HDFCBANK",
-    #     "theStrategyMatch": False,
-    #     "symbolCode": "3045"
-    #   },
-    #     {
-    #     "id": "690767bade68b5e0109817bf",
-    #     "name": "AXISBANK",
-    #     "theStrategyMatch": False,
-    #     "symbolCode": "3045"
-    #   },
-      {
-        "id": "690767bade68b5e0109817c0",
-        "name": "TCS",
-        "theStrategyMatch": False,
-        "symbolCode": "2885"
-      }
-    ]
-  },
-  "tags": [],
-  "totalSubscriber": []
-}
-uptrend = [ "SBIN", "RELIANCE", "HDFCBANK", "ICICIBANK"]
-downtrend =["AXISBANK", "INFY", "TCS","SBIN", "RELIANCE", "HDFCBANK", "ICICIBANK"]
+
 
 def saveInJson(results):
     import json
     symbolname = "SBIN"
-    with open(f"NSE_HDFCBANK-EQ_15.json","w") as f:
+    with open(f"results/NSE_HDFCBANK-EQ_15.json","w") as f:
         json.dump({"results":results},f ,indent=4)
         print("save succesfully")
 
+def calculate_metrics(backtestResults, equity_curve, initial_capital):
 
-def Backtest_Worker_Testing_sync(symbolName, strategy):
+    winning_pnl = sum(t["pnl"] for t in backtestResults if t["pnl"] > 0)
+    losing_pnl = sum(t["pnl"] for t in backtestResults if t["pnl"] < 0)
+
+    winning_trades = len([t for t in backtestResults if t["pnl"] > 0])
+    losing_trades = len([t for t in backtestResults if t["pnl"] < 0])
+
+    total_trades = len(backtestResults)
+
+    avg_win = winning_pnl / winning_trades if winning_trades else 0
+    avg_loss = losing_pnl / losing_trades if losing_trades else 0
+
+    profit_factor = winning_pnl / abs(losing_pnl) if losing_pnl != 0 else 0
+    risk_reward = abs(avg_win / avg_loss) if avg_loss != 0 else 0
+
+    win_rate = (winning_trades / total_trades) if total_trades else 0
+    expectancy = (win_rate * avg_win) + ((1 - win_rate) * avg_loss)
+
+    equity = pd.Series(equity_curve)
+    drawdown = (equity - equity.cummax()) / equity.cummax()
+    max_drawdown = abs(drawdown.min() * 100)
+
+    return {
+        "initial_capital": initial_capital,
+        "final_capital": round(equity.iloc[-1], 2),
+
+        "max_drawdown": max_drawdown,
+
+        "total_trades": total_trades,
+        "winning_trades": winning_trades,
+        "losing_trades": losing_trades,
+
+        "win_rate": round(win_rate * 100, 2),
+
+        "avg_win": round(avg_win, 2),
+        "avg_loss": round(avg_loss, 2),
+
+        "profit_factor": round(profit_factor, 2),
+        "risk_reward": round(risk_reward, 2),
+        "expectancy": round(expectancy, 2),
+    }
+
+def calculate_atr(data, period=14):
+    high = data["High"]
+    low = data["Low"]
+    close = data["Close"]
+
+    tr1 = high - low
+    tr2 = (high - close.shift()).abs()
+    tr3 = (low - close.shift()).abs()
+
+    tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
+
+    atr = tr.rolling(period).mean()
+
+    return atr
+
+def create_position(signal, price, data, capital, risk_percent):
+
+    risk_amount = capital * risk_percent
+
+    atr = data["ATR"].iloc[-1]
+
+    # BUY
+    if signal == "BUY":
+        sl = price - (1.5 * atr)
+        tp = price + (2 * atr)
+        sl_points = price - sl
+
+    # SELL
+    elif signal == "SELL":
+        sl = price + (1.5 * atr)
+        tp = price - (2 * atr)
+        sl_points = sl - price
+
+    else:
+        return None
+
+    if sl_points <= 0:
+        return None
+
+    qty = int(risk_amount / sl_points)
+
+    if qty <= 0:
+        return None
+
+    return {
+        "id": str(uuid.uuid4()),
+        "type": signal,
+        "qty": qty,
+        "entry_price": price,
+        "sl_price": sl,
+        "tp_price": tp
+    }
+
+def check_exit(pos, high, low):
+
+    if pos["type"] == "BUY":
+        if high >= pos["tp_price"]:
+            pnl = (pos["tp_price"] - pos["entry_price"]) * pos["qty"]
+            return True, pnl, "TP Hit"
+
+        elif low <= pos["sl_price"]:
+            pnl = (pos["sl_price"] - pos["entry_price"]) * pos["qty"]
+            return True, pnl, "SL Hit"
+
+    elif pos["type"] == "SELL":
+        if low <= pos["tp_price"]:
+            pnl = (pos["entry_price"] - pos["tp_price"]) * pos["qty"]
+            return True, pnl, "TP Hit"
+
+        elif high >= pos["sl_price"]:
+            pnl = (pos["entry_price"] - pos["sl_price"]) * pos["qty"]
+            return True, pnl, "SL Hit"
+
+    return False, 0, None    
+
+def Backtest_Worker_Testing_sync(symbolName):
     try:
         print(f"🔹 {symbolName}: Worker started")
 
         data = pd.read_parquet("NSE_HDFCBANK-EQ_15.parquet")
+        data_1h = pd.read_parquet("60_data/NSE_HDFCBANK-EQ_60.parquet")
         data = data.set_index(pd.to_datetime(data["datetime"]))
+        data_1h = data_1h.set_index(pd.to_datetime(data_1h["datetime"]))
 
-        print(data.head())
+        # print(data.head())
 
         if data is None or data.empty:
             raise ValueError("No data returned")
@@ -104,201 +180,78 @@ def Backtest_Worker_Testing_sync(symbolName, strategy):
         # ---- Timezone fix ----
         if data.index.tz is None:
             data.index = data.index.tz_localize("UTC").tz_convert("Asia/Kolkata")
-        else:
-            data.index = data.index.tz_convert("Asia/Kolkata")
 
+        if data_1h.index.tz is None:
+            data_1h.index = data_1h.index.tz_localize("UTC").tz_convert("Asia/Kolkata")
+            
+        data["ATR"] = calculate_atr(data)
         capital = 100000.0
+        MAX_POSITIONS = 3
         risk_percent = 0.01
-
+        risk_per_trade = risk_percent / MAX_POSITIONS
         positions = []
         backtestResults = []
         equity_curve = []
         equity_curve.append(100000)
-
-        winning_pnl = losing_pnl = 0.0
-        winning_trades = losing_trades = 0
         signal_count = 0
 
         start_index = 50
-
-        # ================= LOOP =================
+        
         for idx in range(start_index, len(data)):
-
-            if capital <= 0:
-                print(f"🛑 {symbolName}: Capital exhausted.")
-                break
-
+            
+            equity_curve.append(capital)
             newData = data.iloc[:idx]
-
-            close_price = float(newData["Close"].iloc[-1])
             currentTime = newData.index[-1]
+            close_price = float(data["Open"].iloc[idx])   # next candle entry
 
-            # ===== ENTRY =====
-            signal = swingLow_volume_trend_rsi_buy(newData)
+            newdata_60h = data_1h[data_1h.index <= currentTime]
+            if newdata_60h.empty:
+                continue
 
-            if signal:
+            signal = generateSignal(newData, newdata_60h)
+            
+            # ENTRY
+            new_pos = create_position(signal, close_price, newData, capital, risk_per_trade)
 
-                risk_amount = capital * risk_percent
-
-                entry_price = close_price
-
-                sl_price = float(newData["Low"].iloc[-3]) - 7
-                tp_price = entry_price + 15
-
-                sl_points = entry_price - sl_price
-
-                if sl_points <= 0:
-                    continue
-
-                quantity = int(risk_amount / sl_points)
-
-                if quantity <= 0:
-                    print(f"🛑 {symbolName}: Capital too low")
-                    break
-
+            if new_pos and len(positions) < MAX_POSITIONS:
+                new_pos["entry_time"] = str(currentTime)
+                positions.append(new_pos)
                 signal_count += 1
 
-                positions.append({
-                    "id": str(uuid.uuid4()),
-                    "type": "BUY",
-                    "qty": quantity,
-                    "entry_price": entry_price,
-                    "entry_time": str(currentTime),
-                    "sl_price": sl_price,
-                    "tp_price": tp_price
-                })
+            # EXIT
+            high = float(data["High"].iloc[idx])
+            low = float(data["Low"].iloc[idx])
 
-            # ===== EXIT =====
             active_positions = []
 
-            high = float(newData["High"].iloc[-1])
-            low = float(newData["Low"].iloc[-1])
-
             for pos in positions:
-
-                closed = False
-
-                # TP
-                if high >= pos["tp_price"]:
-                    pnl = (pos["tp_price"] - pos["entry_price"]) * pos["qty"]
-                    reason = "TP Hit"
-                    closed = True
-
-                # SL
-                elif low <= pos["sl_price"]:
-                    pnl = (pos["sl_price"] - pos["entry_price"]) * pos["qty"]
-                    reason = "SL Hit"
-                    closed = True
+                closed, pnl, reason = check_exit(pos, high, low)
 
                 if closed:
-
                     capital += pnl
-
-                    pos.update({
-                        "exit_price": close_price,
-                        "exit_time": str(currentTime),
-                        "exit_reason": reason,
-                        "pnl": round(pnl, 2),
-                        "capital_after_trade": round(capital, 2)
-                    })
-                    equity_curve.append(capital)
+                    pos["pnl"] = pnl
+                    pos["exit_time"] = str(currentTime)
+                    pos["exit_reason"] = reason
 
                     backtestResults.append(pos)
-
-                    if pnl > 0:
-                        winning_trades += 1
-                        winning_pnl += pnl
-                    else:
-                        losing_trades += 1
-                        losing_pnl += pnl
-
+                    equity_curve.append(capital)
                 else:
                     active_positions.append(pos)
 
             positions = active_positions
 
         # ===== METRICS =====
-        total_trades = len(backtestResults)
-        total_trades = len(backtestResults)
+        metrics = calculate_metrics(backtestResults, equity_curve, 100000)
 
-        avg_win = winning_pnl / winning_trades if winning_trades else 0
-        avg_loss = losing_pnl / losing_trades if losing_trades else 0
-
-        profit_factor = winning_pnl / abs(losing_pnl) if losing_pnl != 0 else 0
-
-        risk_reward = abs(avg_win / avg_loss) if avg_loss != 0 else 0
-
-        win_rate = (winning_trades / total_trades) if total_trades else 0
-        loss_rate = 1 - win_rate
-
-        expectancy = (win_rate * avg_win) + (loss_rate * avg_loss)
-
-        equity = pd.Series(equity_curve)
-        rolling_max = equity.cummax()
-        drawdown = (equity - rolling_max) / rolling_max
-
-        max_drawdown = abs(drawdown.min() * 100)
-
-        metrices = {
-
-            "initial_capital": 100000,
-            "final_capital": round(capital, 2),
-
-            "max_drawdown":max_drawdown,
-            # "equity_curve":equity_curve,           
-
-            "total_trades": total_trades,
-            "signal_count": signal_count,
-
-            "winning_trades": winning_trades,
-            "losing_trades": losing_trades,
-
-            "winning_pnl": round(winning_pnl, 2),
-            "losing_pnl": round(losing_pnl, 2),
-
-            "total_pnl": round(winning_pnl + losing_pnl, 2),
-
-            "win_rate": round(win_rate * 100, 2),
-
-            "avg_win": round(avg_win, 2),
-            "avg_loss": round(avg_loss, 2),
-
-            "profit_factor": round(profit_factor, 2),
-
-            "risk_reward": round(risk_reward, 2),
-
-            "expectancy": round(expectancy, 2)
-        }
-
-        # metrices = {
-        #     "profit_factor" : winning_pnl / abs(losing_pnl) if losing_pnl != 0 else 0,
-        #     "avg_win" : winning_pnl / winning_trades if winning_trades else 0,
-        #      "avg_loss" : losing_pnl / losing_trades if losing_trades else 0,
-        #     "initial_capital": 100000,
-        #     "final_capital": round(capital, 2),
-        #     "total_trades": total_trades,
-        #     "signal_count": signal_count,
-        #     "winning_trades": winning_trades,
-        #     "losing_trades": losing_trades,
-        #     "winning_pnl": round(winning_pnl, 2),
-        #     "losing_pnl": round(losing_pnl, 2),
-        #     "total_pnl": round(winning_pnl + losing_pnl, 2),
-        #     "win_rate": round(
-        #         (winning_trades / total_trades) * 100, 2
-        #     ) if total_trades else 0.0,
-            
-        # }
-
-        print(f"✅ {symbolName}: Done | Trades={total_trades} | Final Capital={capital:.2f}")
-
+        print(f"{symbolName}: Done | Trades={len(backtestResults)} | Capital={capital:.2f}")
         return {
             "symbol": symbolName,
-            "metrices": metrices,
+            "metrices": metrics,
             "trades": list(reversed(backtestResults))
         }
 
     except Exception as e:
-        print(f"❌ {symbolName}: Error -> {e}")
+        print(f" {symbolName}: Error -> {e}")
         return {
             "symbol": symbolName,
             "error": str(e),
@@ -307,9 +260,15 @@ def Backtest_Worker_Testing_sync(symbolName, strategy):
         }
 if __name__ == "__main__":
 
-    results = Backtest_Worker_Testing_sync("HDFCBANK",strategy)
-    saveInJson(results)
-    print(results)
+    # results = Backtest_Worker_Testing_sync("HDFCBANK")
+    # saveInJson(results)
+    # print(results)
+    
+    data = pd.read_parquet("60_data/NSE_HDFCBANK-EQ_60.parquet")
+    print(len(data))
+    print(data)
+    
+    
 
     # data = getIntradayData("SBIN" , "15m")
 

@@ -87,7 +87,6 @@ def swingLow(data, window=2):
 # ====================================================================
 #                     LONG (BUY) STRATEGY FUNCTION
 # ====================================================================
-import talib as ta
 
 def check_market_trend(data):
     if len(data) < 150:
@@ -96,8 +95,8 @@ def check_market_trend(data):
 
     close = data["Close"]
 
-    ema50 = ta.EMA(close, timeperiod=50)
-    ema200 = ta.EMA(close, timeperiod=200)
+    ema50 = tb.EMA(close, timeperiod=50)
+    ema200 = tb.EMA(close, timeperiod=200)
 
     current_price = close.iloc[-1]
 
@@ -130,7 +129,7 @@ def check_volatility(data, period=14):
     if len(data) < period:
         return None
 
-    atr = ta.ATR(
+    atr = tb.ATR(
         data["High"],
         data["Low"],
         data["Close"],
@@ -152,35 +151,35 @@ def swingLow_volume_trend_rsi_buy(data):
     try:
 
         # -------- Volume --------
-        ok_volume = volumecheck(data)
+        # ok_volume = volumecheck(data)
 
         # -------- Extract Candle --------
-        o = float(data["Open"].iloc[-1])
-        c = float(data["Close"].iloc[-1])
-        h = float(data["High"].iloc[-1])
-        l = float(data["Low"].iloc[-1])
+        # o = float(data["Open"].iloc[-1])
+        # c = float(data["Close"].iloc[-1])
+        # h = float(data["High"].iloc[-1])
+        # l = float(data["Low"].iloc[-1])
 
-        prev_h = float(data["High"].iloc[-2])
-        prev3_h = float(data["High"].iloc[-3])
+        # prev_h = float(data["High"].iloc[-2])
+        # prev3_h = float(data["High"].iloc[-3])
 
         # -------- Candle Strength --------
-        body = abs(c - o)
-        full = h - l
-        is_strong = full > 0 and body >= 0.5 * full
+        # body = abs(c - o)
+        # full = h - l
+        # is_strong = full > 0 and body >= 0.5 * full
 
         # -------- Indicators --------
-        rsi = float(tb.RSI(data["Close"], 14).iloc[-1])
-        sma20 = float(tb.SMA(data["Close"], 20).iloc[-1])
-        sma50 = float(tb.SMA(data["Close"], 50).iloc[-1])
-        sma200 = float(tb.SMA(data["Close"], 200).iloc[-1])
+        # rsi = float(tb.RSI(data["Close"], 14).iloc[-1])
+        # sma20 = float(tb.SMA(data["Close"], 20).iloc[-1])
+        # sma50 = float(tb.SMA(data["Close"], 50).iloc[-1])
+        # sma200 = float(tb.SMA(data["Close"], 200).iloc[-1])
 
         # Safety
-        if any(pd.isna(x) for x in [rsi, sma20, sma50, sma200]):
-            print(f": Indicator NaN — skipping")
-            return
+        # if any(pd.isna(x) for x in [rsi, sma20, sma50, sma200]):
+        #     print(f": Indicator NaN — skipping")
+        #     return
 
         # -------- Breakout --------
-        is_breakout = (h > prev_h) and (prev_h > prev3_h)
+        # is_breakout = (h > prev_h) and (prev_h > prev3_h)
 
         # -------- Swing Low --------
         sl = swingLow(data)
@@ -190,10 +189,10 @@ def swingLow_volume_trend_rsi_buy(data):
         # STRATEGY 1
         if (
             sl is not None
-            and is_strong
-            and sma50 > sma200
-            and rsi > 55
-            and ok_volume
+            # and is_strong
+            # and sma50 > sma200
+            # and rsi > 55
+            # and ok_volume
             # and is_breakout
         ):
             signal = True
@@ -215,59 +214,36 @@ def swingLow_volume_trend_rsi_buy(data):
         print("Error:", e)
         return False
 
-# ====================================================================
-#                     SHORT (SELL) STRATEGY FUNCTION
-# ====================================================================
-async def swingHigh_volume_trend_rsi_buy(symbol="HDFCBANK", timeframe="15m"):
+def swingHigh_volume_trend_rsi_buy(data):
     try:
-        ticker = f"{symbol}.NS"
-        interval = intervals[timeframe]
-        data = yf.download(ticker, interval=timeframe, period=interval, progress=False)
-
-        if data is None or data.empty:
-            print(f"{symbol}: Data empty")
-            return
-
-        data = fix_yf_multiindex(data)
-
-        if data.index.tz is None:
-            data.index = data.index.tz_localize("UTC").tz_convert("Asia/Kolkata")
-        else:
-            data.index = data.index.tz_convert("Asia/Kolkata")
-
-        data = data.iloc[:-1]
-
-        print(f"\n=== {symbol} ===")
-        print(data.tail(3))
-
         # -------- Volume --------
-        ok_volume = volumecheck(data)
+        # ok_volume = volumecheck(data)
 
         # -------- Candle --------
-        o = float(data["Open"].iloc[-1])
-        c = float(data["Close"].iloc[-1])
-        h = float(data["High"].iloc[-1])
-        l = float(data["Low"].iloc[-1])
+        # o = float(data["Open"].iloc[-1])
+        # c = float(data["Close"].iloc[-1])
+        # h = float(data["High"].iloc[-1])
+        # l = float(data["Low"].iloc[-1])
 
-        prev_l = float(data["Low"].iloc[-2])
-        prev3_l = float(data["Low"].iloc[-3])
+        # prev_l = float(data["Low"].iloc[-2])
+        # prev3_l = float(data["Low"].iloc[-3])
 
-        body = abs(c - o)
-        full = h - l
-        is_strong = full > 0 and body >= 0.5 * full
+        # body = abs(c - o)
+        # full = h - l
+        # is_strong = full > 0 and body >= 0.5 * full
 
         # -------- Indicators --------
-        rsi = float(tb.RSI(data["Close"], 14).iloc[-1])
-        sma20 = float(tb.SMA(data["Close"], 20).iloc[-1])
-        sma50 = float(tb.SMA(data["Close"], 50).iloc[-1])
-        sma200 = float(tb.SMA(data["Close"], 200).iloc[-1])
+        # rsi = float(tb.RSI(data["Close"], 14).iloc[-1])
+        # sma20 = float(tb.SMA(data["Close"], 20).iloc[-1])
+        # sma50 = float(tb.SMA(data["Close"], 50).iloc[-1])
+        # sma200 = float(tb.SMA(data["Close"], 200).iloc[-1])
 
-        if any(pd.isna(x) for x in [rsi, sma20, sma50, sma200]):
-            print(f"{symbol}: Indicator NaN — skipping")
-            return
+        # if any(pd.isna(x) for x in [rsi, sma20, sma50, sma200]):
+        #     print(f"Indicator NaN — skipping")
+        #     return False
 
         # -------- Breakout --------
-        is_breakout = (l < prev_l) and (prev_l < prev3_l)
+        # is_breakout = (l < prev_l) and (prev_l < prev3_l)
 
         # -------- Swing High --------
         sh = swingHigh(data)
@@ -277,61 +253,31 @@ async def swingHigh_volume_trend_rsi_buy(symbol="HDFCBANK", timeframe="15m"):
         # STRATEGY 1
         if (
             sh is not None
-            and is_strong
-            and sma50 < sma200
-            and rsi < 50
-            and ok_volume
+            # and is_strong
+            # and sma50 < sma200
+            # and rsi < 50
+            # and ok_volume
         ):
-            signal = True
+            signal =   True
 
-        # STRATEGY 2
-        elif ok_volume and sma50 < sma200 and is_strong and is_breakout:
-            signal = True
 
         if signal:
-            # sl  = data['High'].iloc[-3] + 5
-            # tp  = c - 10
-            place_Order(symbol,2,"S")
-            print(f"SELL SIGNAL for {symbol}")
+            # sl  =return data['low'].iloc[-3] + 5
+            # tp  = c + 10
+            return True
         else:
-            print(f"No Sell signal for {symbol}")
-
+            return False
+            
     except Exception as e:
         print("Error:", e)
-
-
-volatile_symbols = [
-    "AXISBANK", "INFY", "TCS", "MARUTI",
-    "TATASTEEL", "JSWSTEEL", "ADANIENT", "ADANIPORTS", "ADANIPOWER", "AXISBANK",
-    "BAJFINANCE", "BAJAJFINSV", "ULTRACEMCO", "HINDALCO", "ICICIBANK", "BAJAJELEC"
-]
-
-uptrend = [ "SBIN", "RELIANCE", "HDFCBANK", "ICICIBANK" , "AXISBANK","ULTRACEMCO"]
-downtrend =["AXISBANK", "INFY", "TCS","SBIN", "RELIANCE", "HDFCBANK", "ICICIBANK"]
-
-
-async def run_all_strategies(timeframe="15m"):
-    tasks = []
-    for sym in uptrend:
-
-        # BUY strategy
-        tasks.append(
-            swingLow_volume_trend_rsi_buy(symbol=sym, timeframe=timeframe)
-        )
-
-    for sym in downtrend:
-
-        # SELL strategy
-        tasks.append(
-            swingHigh_volume_trend_rsi_buy(symbol=sym, timeframe=timeframe)
-        )
-
-    # Run them concurrently
-    print("print time:", datetime.now().strftime("%H:%M:%S"))
-    await asyncio.gather(*tasks)
-
-
-# ============= RUN LOOP =================
+        return False
+    
+def generateSignal(dataforTrade, dataForTrend=None):
+    if swingLow(dataforTrade) is not None:
+        return "BUY"
+    elif swingHigh(dataforTrade) is not None:
+        return "SELL"
+    return None
 # scheduler startup function (unchanged)
 async def start_scheduler():
     # asyncio.run(process_queue("15min"))
