@@ -65,6 +65,7 @@ def calculate_metrics(backtestResults, equity_curve, initial_capital):
     equity = pd.Series(equity_curve)
     drawdown = (equity - equity.cummax()) / equity.cummax()
     max_drawdown = abs(drawdown.min() * 100)
+    
 
     return {
         "initial_capital": initial_capital,
@@ -106,17 +107,16 @@ def create_position(signal, price, data, capital, risk_percent):
     risk_amount = capital * risk_percent
 
     atr = data["ATR"].iloc[-1]
-
     # BUY
     if signal == "BUY":
-        sl = price - (1.5 * atr)
-        tp = price + (2 * atr)
+        sl = price - (2 * atr)
+        tp = None
         sl_points = price - sl
 
     # SELL
     elif signal == "SELL":
-        sl = price + (1.5 * atr)
-        tp = price - (2 * atr)
+        sl = price + (2 * atr)
+        tp = None
         sl_points = sl - price
 
     else:
@@ -136,30 +136,57 @@ def create_position(signal, price, data, capital, risk_percent):
         "qty": qty,
         "entry_price": price,
         "sl_price": sl,
-        "tp_price": tp
+        "tp_price": tp,
+        "atr":atr
     }
-
-def check_exit(pos, high, low):
+def update_trailing_sl(pos, current_price, atr):
 
     if pos["type"] == "BUY":
-        if high >= pos["tp_price"]:
-            pnl = (pos["tp_price"] - pos["entry_price"]) * pos["qty"]
-            return True, pnl, "TP Hit"
 
-        elif low <= pos["sl_price"]:
+        if current_price > pos["entry_price"] + (1.5 * atr):
+
+            new_sl = current_price - (1.5 * atr)
+
+            if new_sl > pos["sl_price"]:
+                pos["sl_price"] = new_sl
+
+    elif pos["type"] == "SELL":
+
+        if current_price < pos["entry_price"] - (1.5 * atr):
+
+            new_sl = current_price + (1.5 * atr)
+
+            if new_sl < pos["sl_price"]:
+                pos["sl_price"] = new_sl
+
+    return pos
+
+def move_to_cost(pos, current_price, atr):
+
+    if pos["type"] == "BUY":
+        if current_price > pos["entry_price"] + (1 * atr):
+            pos["sl_price"] = max(pos["sl_price"], pos["entry_price"])
+
+    elif pos["type"] == "SELL":
+        if current_price < pos["entry_price"] - (1 * atr):
+            pos["sl_price"] = min(pos["sl_price"], pos["entry_price"])
+
+    return pos
+def check_exit(pos, high, low):
+
+    # BUY position
+    if pos["type"] == "BUY":
+        if low <= pos["sl_price"]:
             pnl = (pos["sl_price"] - pos["entry_price"]) * pos["qty"]
             return True, pnl, "SL Hit"
 
+    # SELL position
     elif pos["type"] == "SELL":
-        if low <= pos["tp_price"]:
-            pnl = (pos["entry_price"] - pos["tp_price"]) * pos["qty"]
-            return True, pnl, "TP Hit"
-
-        elif high >= pos["sl_price"]:
+        if high >= pos["sl_price"]:
             pnl = (pos["entry_price"] - pos["sl_price"]) * pos["qty"]
             return True, pnl, "SL Hit"
 
-    return False, 0, None    
+    return False, 0, None  
 
 def Backtest_Worker_Testing_sync(symbolName):
     try:
@@ -223,8 +250,12 @@ def Backtest_Worker_Testing_sync(symbolName):
             low = float(data["Low"].iloc[idx])
 
             active_positions = []
+            current_price = float(data["Close"].iloc[idx])
+            current_atr = data["ATR"].iloc[idx]
 
             for pos in positions:
+                pos = update_trailing_sl(pos, current_price, pos["atr"])
+                pos = move_to_cost(pos, current_price, pos["atr"])
                 closed, pnl, reason = check_exit(pos, high, low)
 
                 if closed:
@@ -242,10 +273,29 @@ def Backtest_Worker_Testing_sync(symbolName):
 
         # ===== METRICS =====
         metrics = calculate_metrics(backtestResults, equity_curve, 100000)
+        yearly_return = {}
+        year_start_capital = 100000  # reset
+                
+        df = pd.DataFrame(backtestResults)
+        df["exit_time"] = pd.to_datetime(df["exit_time"])
+        df["year"] = df["exit_time"].dt.year
+        yearly_pnl = df.groupby("year")["pnl"].sum()
+
+
+        for year, pnl in yearly_pnl.items():
+            pct = (pnl / year_start_capital) * 100
+            yearly_return[year] = round(pct, 2)
+            year_start_capital += pnl
+
+        # print(yearly_return)
+        
+        
+
 
         print(f"{symbolName}: Done | Trades={len(backtestResults)} | Capital={capital:.2f}")
         return {
             "symbol": symbolName,
+            "yearly_return":yearly_return,
             "metrices": metrics,
             "trades": list(reversed(backtestResults))
         }
