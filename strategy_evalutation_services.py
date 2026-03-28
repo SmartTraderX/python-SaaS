@@ -103,26 +103,20 @@ def calculate_atr(data, period=14):
     return atr
 
 def create_position(signal, price, data, capital, risk_percent,atr):
+def create_position(signal, price, data, capital, risk_percent,atr):
 
     risk_amount = capital * risk_percent
 
-    # atr = data["ATR"].iloc[-1]
-   
-#    Base benchmark bana  Isko baseline maan
-#     SL = 1.5 ATR
-#     TP = 2 ATR
-#     RR ≈ 1.33
-
     # BUY
     if signal == "BUY":
-        sl = price - (1.5 * atr)
-        tp = None
+        sl = price - 7
+        tp = price +(4*atr)
         sl_points = price - sl
 
     # SELL
     elif signal == "SELL":
-        sl = price + (2 * atr)
-        tp = None
+        sl = price + 7
+        tp = price -(4*atr)
         sl_points = sl - price
 
     else:
@@ -138,6 +132,7 @@ def create_position(signal, price, data, capital, risk_percent,atr):
 
     return {
         "id": str(uuid.uuid4()),
+        "capital":capital,
         "type": signal,
         "qty": qty,
         "entry_price": price,
@@ -180,19 +175,27 @@ def move_to_cost(pos, current_price, atr):
     return pos
 def check_exit(pos, high, low):
 
-    # BUY position
+    # 🟢 BUY position
     if pos["type"] == "BUY":
+        if high >= pos["tp_price"]:
+            pnl = (pos["tp_price"] - pos["entry_price"]) * pos["qty"]
+            return True, pnl, "TP Hit"
+            
         if low <= pos["sl_price"]:
             pnl = (pos["sl_price"] - pos["entry_price"]) * pos["qty"]
             return True, pnl, "SL Hit"
 
-    # SELL position
+    # 🔴 SELL position
     elif pos["type"] == "SELL":
+        if low <= pos["tp_price"]:
+            pnl = (pos["entry_price"] - pos["tp_price"]) * pos["qty"]
+            return True, pnl, "TP Hit"
+            
         if high >= pos["sl_price"]:
             pnl = (pos["entry_price"] - pos["sl_price"]) * pos["qty"]
             return True, pnl, "SL Hit"
 
-    return False, 0, None  
+    return False, 0, None
 
 def Backtest_Worker_Testing_sync(symbolName):
     try:
@@ -245,8 +248,9 @@ def Backtest_Worker_Testing_sync(symbolName):
 
         #     signal = generateSignal(newData, newdata_60h)
             
-        #     # ENTRY
-        #     new_pos = create_position(signal, close_price, newData, capital, risk_per_trade)
+            # ENTRY
+            current_atr = data["ATR"].iloc[idx-1] 
+            new_pos = create_position(signal,close_price, newData, capital, risk_per_trade,current_atr)
 
         #     if new_pos and len(positions) < MAX_POSITIONS:
         #         new_pos["entry_time"] = str(currentTime)
@@ -257,20 +261,21 @@ def Backtest_Worker_Testing_sync(symbolName):
         #     high = float(data["High"].iloc[idx])
         #     low = float(data["Low"].iloc[idx])
 
-        #     active_positions = []
-        #     current_price = float(data["Close"].iloc[idx])
-        #     current_atr = data["ATR"].iloc[idx]
+            active_positions = []
+            current_price = float(data["Close"].iloc[idx])
+            
 
-        #     for pos in positions:
-        #         pos = update_trailing_sl(pos, current_price, pos["atr"])
-        #         pos = move_to_cost(pos, current_price, pos["atr"])
-        #         closed, pnl, reason = check_exit(pos, high, low)
+            for pos in positions:
+                # pos = update_trailing_sl(pos, current_price, current_atr)
+                # pos = move_to_cost(pos, current_price, pos["atr"])
+                closed, pnl, reason = check_exit(pos, high, low)
 
-        #         if closed:
-        #             capital += pnl
-        #             pos["pnl"] = pnl
-        #             pos["exit_time"] = str(currentTime)
-        #             pos["exit_reason"] = reason
+                if closed:
+                    capital += pnl
+                    pos["pnl"] = pnl
+                    pos["exit_time"] = str(currentTime)
+                    pos["exit_price"] = current_price
+                    pos["exit_reason"] = reason
 
         #             backtestResults.append(pos)
         #             equity_curve.append(capital)

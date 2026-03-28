@@ -47,7 +47,28 @@ def volumecheck(data, min_high_vol_candles=2):
 
     return (last5 > avg20).sum() > min_high_vol_candles
 
+def is_ema_retest(row, prev_row, tolerance=0.005):
 
+    ema = prev_row["EMA20"]
+
+    # 🟢 BUY (uptrend)
+    uptrend = prev_row["Close"] > ema
+    touch_up = prev_row["Low"] <= ema
+    near_up = abs(prev_row["Close"] - ema) / ema < tolerance
+    bounce_up = row["Close"] > row["Open"]
+
+    buy_signal = uptrend and (touch_up or near_up) and bounce_up
+
+
+    # SELL (downtrend)
+    downtrend = prev_row["Close"] < ema
+    touch_down = prev_row["High"] >= ema
+    near_down = abs(prev_row["Close"] - ema) / ema < tolerance
+    bounce_down = row["Close"] < row["Open"]
+
+    sell_signal = downtrend and (touch_down or near_down) and bounce_down
+
+    return buy_signal, sell_signal
 # ---------------------- SWING HIGH ----------------------
 def swingHigh(data, window=2):
     if len(data) < window * 2 + 1:
@@ -276,18 +297,27 @@ def swingHigh_volume_trend_rsi_buy(data):
         return False
     
 def generateSignal(dataforTrade, dataForTrend=None):
-    if dataForTrend is None:
-        return None
+    if len(dataForTrend) < 50:
+       return None
+
 
     trend = check_market_trend(dataForTrend)
+    dataforTrade["EMA20"] = tb.EMA(dataforTrade["Close"], timeperiod=20)
+    row = dataforTrade.iloc[-1]
+    prev_row = dataforTrade.iloc[-2]
+    
+    
+    sell_signal , buy_signal= is_ema_retest(row, prev_row)
+    
+    print(trend)
+    print("sell_signal",sell_signal)
+    print("buy_signal",buy_signal)
 
-    if trend == "STRONG_UPTREND":
-        if swingLow_volume_trend_rsi_buy(dataforTrade):
-            return "BUY"
+    if buy_signal and trend == "STRONG_UPTREND":
+        return "BUY"
 
-    elif trend == "STRONG_DOWNTREND":
-        if swingHigh_volume_trend_rsi_buy(dataforTrade):
-            return "SELL"
+    elif sell_signal and trend == "STRONG_DOWNTREND":
+        return "SELL"
 
     return None
 # scheduler startup function (unchanged)
