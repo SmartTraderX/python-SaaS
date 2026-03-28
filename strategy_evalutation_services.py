@@ -102,11 +102,11 @@ def calculate_atr(data, period=14):
 
     return atr
 
-def create_position(signal, price, data, capital, risk_percent):
+def create_position(signal, price, data, capital, risk_percent,atr):
 
     risk_amount = capital * risk_percent
 
-    atr = data["ATR"].iloc[-1]
+    # atr = data["ATR"].iloc[-1]
    
 #    Base benchmark bana  Isko baseline maan
 #     SL = 1.5 ATR
@@ -116,8 +116,6 @@ def create_position(signal, price, data, capital, risk_percent):
     # BUY
     if signal == "BUY":
         sl = price - (1.5 * atr)
-        tp = price + (2.2 * atr)
-        sl = price - (2 * atr)
         tp = None
         sl_points = price - sl
 
@@ -220,6 +218,8 @@ def Backtest_Worker_Testing_sync(symbolName):
             data_1h.index = data_1h.index.tz_localize("UTC").tz_convert("Asia/Kolkata")
             
         data["ATR"] = calculate_atr(data)
+        os.makedirs("Atrs",exist_ok=True)
+        pd.DataFrame(data["ATR"]).to_json("Atrs/atr.json", orient="records",indent=4)
         capital = 100000.0
         MAX_POSITIONS = 3
         risk_percent = 0.01
@@ -232,81 +232,81 @@ def Backtest_Worker_Testing_sync(symbolName):
 
         start_index = 50
         
-        for idx in range(start_index, len(data)):
+        # for idx in range(start_index, len(data)):
             
-            equity_curve.append(capital)
-            newData = data.iloc[:idx]
-            currentTime = newData.index[-1]
-            close_price = float(data["Open"].iloc[idx])   # next candle entry
+        #     equity_curve.append(capital)
+        #     newData = data.iloc[:idx]
+        #     currentTime = newData.index[-1]
+        #     close_price = float(data["Open"].iloc[idx])   # next candle entry
 
-            newdata_60h = data_1h[data_1h.index <= currentTime]
-            if newdata_60h.empty:
-                continue
+        #     newdata_60h = data_1h[data_1h.index <= currentTime]
+        #     if newdata_60h.empty:
+        #         continue
 
-            signal = generateSignal(newData, newdata_60h)
+        #     signal = generateSignal(newData, newdata_60h)
             
-            # ENTRY
-            new_pos = create_position(signal, close_price, newData, capital, risk_per_trade)
+        #     # ENTRY
+        #     new_pos = create_position(signal, close_price, newData, capital, risk_per_trade)
 
-            if new_pos and len(positions) < MAX_POSITIONS:
-                new_pos["entry_time"] = str(currentTime)
-                positions.append(new_pos)
-                signal_count += 1
+        #     if new_pos and len(positions) < MAX_POSITIONS:
+        #         new_pos["entry_time"] = str(currentTime)
+        #         positions.append(new_pos)
+        #         signal_count += 1
 
-            # EXIT
-            high = float(data["High"].iloc[idx])
-            low = float(data["Low"].iloc[idx])
+        #     # EXIT
+        #     high = float(data["High"].iloc[idx])
+        #     low = float(data["Low"].iloc[idx])
 
-            active_positions = []
-            current_price = float(data["Close"].iloc[idx])
-            current_atr = data["ATR"].iloc[idx]
+        #     active_positions = []
+        #     current_price = float(data["Close"].iloc[idx])
+        #     current_atr = data["ATR"].iloc[idx]
 
-            for pos in positions:
-                pos = update_trailing_sl(pos, current_price, pos["atr"])
-                pos = move_to_cost(pos, current_price, pos["atr"])
-                closed, pnl, reason = check_exit(pos, high, low)
+        #     for pos in positions:
+        #         pos = update_trailing_sl(pos, current_price, pos["atr"])
+        #         pos = move_to_cost(pos, current_price, pos["atr"])
+        #         closed, pnl, reason = check_exit(pos, high, low)
 
-                if closed:
-                    capital += pnl
-                    pos["pnl"] = pnl
-                    pos["exit_time"] = str(currentTime)
-                    pos["exit_reason"] = reason
+        #         if closed:
+        #             capital += pnl
+        #             pos["pnl"] = pnl
+        #             pos["exit_time"] = str(currentTime)
+        #             pos["exit_reason"] = reason
 
-                    backtestResults.append(pos)
-                    equity_curve.append(capital)
-                else:
-                    active_positions.append(pos)
+        #             backtestResults.append(pos)
+        #             equity_curve.append(capital)
+        #         else:
+        #             active_positions.append(pos)
 
-            positions = active_positions
+        #     positions = active_positions
 
-        # ===== METRICS =====
-        metrics = calculate_metrics(backtestResults, equity_curve, 100000)
-        yearly_return = {}
-        year_start_capital = 100000  # reset
+        # # ===== METRICS =====
+        # metrics = calculate_metrics(backtestResults, equity_curve, 100000)
+        # yearly_return = {}
+        # year_start_capital = 100000  # reset
                 
-        df = pd.DataFrame(backtestResults)
-        df["exit_time"] = pd.to_datetime(df["exit_time"])
-        df["year"] = df["exit_time"].dt.year
-        yearly_pnl = df.groupby("year")["pnl"].sum()
+        # df = pd.DataFrame(backtestResults)
+        # df["exit_time"] = pd.to_datetime(df["exit_time"])
+        # df["year"] = df["exit_time"].dt.year
+        # yearly_pnl = df.groupby("year")["pnl"].sum()
 
 
-        for year, pnl in yearly_pnl.items():
-            pct = (pnl / year_start_capital) * 100
-            yearly_return[year] = round(pct, 2)
-            year_start_capital += pnl
+        # for year, pnl in yearly_pnl.items():
+        #     pct = (pnl / year_start_capital) * 100
+        #     yearly_return[year] = round(pct, 2)
+        #     year_start_capital += pnl
 
-        # print(yearly_return)
+        # # print(yearly_return)
         
         
 
 
-        print(f"{symbolName}: Done | Trades={len(backtestResults)} | Capital={capital:.2f}")
-        return {
-            "symbol": symbolName,
-            "yearly_return":yearly_return,
-            "metrices": metrics,
-            "trades": list(reversed(backtestResults))
-        }
+        # print(f"{symbolName}: Done | Trades={len(backtestResults)} | Capital={capital:.2f}")
+        # return {
+        #     "symbol": symbolName,
+        #     "yearly_return":yearly_return,
+        #     "metrices": metrics,
+        #     "trades": list(reversed(backtestResults))
+        # }
 
     except Exception as e:
         print(f" {symbolName}: Error -> {e}")
