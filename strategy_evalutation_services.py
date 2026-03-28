@@ -107,8 +107,16 @@ def create_position(signal, price, data, capital, risk_percent):
     risk_amount = capital * risk_percent
 
     atr = data["ATR"].iloc[-1]
+   
+#    Base benchmark bana  Isko baseline maan
+#     SL = 1.5 ATR
+#     TP = 2 ATR
+#     RR ≈ 1.33
+
     # BUY
     if signal == "BUY":
+        sl = price - (1.5 * atr)
+        tp = price + (2.2 * atr)
         sl = price - (2 * atr)
         tp = None
         sl_points = price - sl
