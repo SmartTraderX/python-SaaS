@@ -110,11 +110,7 @@ def swingLow(data, window=2):
 # ====================================================================
 
 def check_market_trend(data):
-    if data is None:
-        print("Datanone")
-        return "SIDEWAYS"
-    if len(data) < 150:
-        print("Too short to find market trend")
+    if len(data) < 200:
         return None
 
     close = data["Close"]
@@ -122,17 +118,16 @@ def check_market_trend(data):
     ema50 = tb.EMA(close, timeperiod=50)
     ema200 = tb.EMA(close, timeperiod=200)
 
-    current_price = close.iloc[-1]
+    ema50_slope = (ema50.iloc[-1] - ema50.iloc[-10]) / ema50.iloc[-10]
 
-    if current_price > ema50.iloc[-1] > ema200.iloc[-1]:
+    if close.iloc[-1] > ema50.iloc[-1] > ema200.iloc[-1] and ema50_slope > 0.002:
         return "STRONG_UPTREND"
-    
-    elif current_price < ema50.iloc[-1] < ema200.iloc[-1]:
+
+    elif close.iloc[-1] < ema50.iloc[-1] < ema200.iloc[-1] and ema50_slope < -0.002:
         return "STRONG_DOWNTREND"
-    
+
     else:
         return "SIDEWAYS"
-    
 def check_range_market(data, window=50, threshold=0.02):
     if len(data) < window:
         return None
@@ -307,7 +302,7 @@ def generateSignal(dataforTrade, dataForTrend=None):
     prev_row = dataforTrade.iloc[-2]
     
     
-    sell_signal , buy_signal= is_ema_retest(row, prev_row)
+    buy_signal, sell_signal = is_ema_retest(row, prev_row)
     
     print(trend)
     print("sell_signal",sell_signal)

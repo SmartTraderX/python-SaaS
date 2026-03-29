@@ -103,20 +103,19 @@ def calculate_atr(data, period=14):
     return atr
 
 def create_position(signal, price, data, capital, risk_percent,atr):
-def create_position(signal, price, data, capital, risk_percent,atr):
 
     risk_amount = capital * risk_percent
 
     # BUY
     if signal == "BUY":
         sl = price - 7
-        tp = price +(4*atr)
+        tp = price +15
         sl_points = price - sl
 
     # SELL
     elif signal == "SELL":
         sl = price + 7
-        tp = price -(4*atr)
+        tp = price -15
         sl_points = sl - price
 
     else:
@@ -201,10 +200,14 @@ def Backtest_Worker_Testing_sync(symbolName):
     try:
         print(f"🔹 {symbolName}: Worker started")
 
-        data = pd.read_parquet("NSE_HDFCBANK-EQ_15.parquet")
-        data_1h = pd.read_parquet("60_data/NSE_HDFCBANK-EQ_60.parquet")
+        data = pd.read_parquet(f"NSE_{symbolName}-EQ_data/NSE_{symbolName}-EQ_15.parquet")
+        data_1h = pd.read_parquet(f"NSE_{symbolName}-EQ_data/NSE_{symbolName}-EQ_240.parquet")
+
         data = data.set_index(pd.to_datetime(data["datetime"]))
         data_1h = data_1h.set_index(pd.to_datetime(data_1h["datetime"]))
+
+        print(f"✅ {symbolName}: Data loaded successfully")
+
 
         # print(data.head())
 
@@ -223,43 +226,45 @@ def Backtest_Worker_Testing_sync(symbolName):
         data["ATR"] = calculate_atr(data)
         os.makedirs("Atrs",exist_ok=True)
         pd.DataFrame(data["ATR"]).to_json("Atrs/atr.json", orient="records",indent=4)
-        capital = 100000.0
+        intital = 1000000
+        capital = intital
         MAX_POSITIONS = 3
         risk_percent = 0.01
         risk_per_trade = risk_percent / MAX_POSITIONS
         positions = []
         backtestResults = []
         equity_curve = []
-        equity_curve.append(100000)
+        equity_curve.append(intital)
+       
         signal_count = 0
 
         start_index = 50
         
-        # for idx in range(start_index, len(data)):
+        for idx in range(start_index, len(data)):
             
-        #     equity_curve.append(capital)
-        #     newData = data.iloc[:idx]
-        #     currentTime = newData.index[-1]
-        #     close_price = float(data["Open"].iloc[idx])   # next candle entry
+            equity_curve.append(capital)
+            newData = data.iloc[:idx]
+            currentTime = newData.index[-1]
+            close_price = float(data["Open"].iloc[idx])   # next candle entry
 
-        #     newdata_60h = data_1h[data_1h.index <= currentTime]
-        #     if newdata_60h.empty:
-        #         continue
+            newdata_60h = data_1h[data_1h.index <= currentTime]
+            if newdata_60h.empty:
+                continue
 
-        #     signal = generateSignal(newData, newdata_60h)
+            signal = generateSignal(newData, newdata_60h)
             
             # ENTRY
             current_atr = data["ATR"].iloc[idx-1] 
             new_pos = create_position(signal,close_price, newData, capital, risk_per_trade,current_atr)
 
-        #     if new_pos and len(positions) < MAX_POSITIONS:
-        #         new_pos["entry_time"] = str(currentTime)
-        #         positions.append(new_pos)
-        #         signal_count += 1
+            if new_pos and len(positions) < MAX_POSITIONS:
+                new_pos["entry_time"] = str(currentTime)
+                positions.append(new_pos)
+                signal_count += 1
 
-        #     # EXIT
-        #     high = float(data["High"].iloc[idx])
-        #     low = float(data["Low"].iloc[idx])
+            # EXIT
+            high = float(data["High"].iloc[idx])
+            low = float(data["Low"].iloc[idx])
 
             active_positions = []
             current_price = float(data["Close"].iloc[idx])
@@ -277,41 +282,41 @@ def Backtest_Worker_Testing_sync(symbolName):
                     pos["exit_price"] = current_price
                     pos["exit_reason"] = reason
 
-        #             backtestResults.append(pos)
-        #             equity_curve.append(capital)
-        #         else:
-        #             active_positions.append(pos)
+                    backtestResults.append(pos)
+                    equity_curve.append(capital)
+                else:
+                    active_positions.append(pos)
 
-        #     positions = active_positions
+            positions = active_positions
 
         # # ===== METRICS =====
-        # metrics = calculate_metrics(backtestResults, equity_curve, 100000)
-        # yearly_return = {}
-        # year_start_capital = 100000  # reset
+        metrics = calculate_metrics(backtestResults, equity_curve, intital)
+        yearly_return = {}
+        year_start_capital = 100000  # reset
                 
-        # df = pd.DataFrame(backtestResults)
-        # df["exit_time"] = pd.to_datetime(df["exit_time"])
-        # df["year"] = df["exit_time"].dt.year
-        # yearly_pnl = df.groupby("year")["pnl"].sum()
+        df = pd.DataFrame(backtestResults)
+        df["exit_time"] = pd.to_datetime(df["exit_time"])
+        df["year"] = df["exit_time"].dt.year
+        yearly_pnl = df.groupby("year")["pnl"].sum()
 
 
-        # for year, pnl in yearly_pnl.items():
-        #     pct = (pnl / year_start_capital) * 100
-        #     yearly_return[year] = round(pct, 2)
-        #     year_start_capital += pnl
+        for year, pnl in yearly_pnl.items():
+            pct = (pnl / year_start_capital) * 100
+            yearly_return[year] = round(pct, 2)
+            year_start_capital += pnl
 
-        # # print(yearly_return)
+        # print(yearly_return)
         
         
 
 
-        # print(f"{symbolName}: Done | Trades={len(backtestResults)} | Capital={capital:.2f}")
-        # return {
-        #     "symbol": symbolName,
-        #     "yearly_return":yearly_return,
-        #     "metrices": metrics,
-        #     "trades": list(reversed(backtestResults))
-        # }
+        print(f"{symbolName}: Done | Trades={len(backtestResults)} | Capital={capital:.2f}")
+        return {
+            "symbol": symbolName,
+            "yearly_return":yearly_return,
+            "metrices": metrics,
+            "trades": list(reversed(backtestResults))
+        }
 
     except Exception as e:
         print(f" {symbolName}: Error -> {e}")

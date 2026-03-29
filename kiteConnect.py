@@ -10,7 +10,7 @@ import pandas as pd
 CLIENT_ID = "JDW5YNOJ7Q-100"
 SECRET_KEY = "KFT2BXKQCZ"
 # REDIRECT_URI = "https://suturally-interconfessional-sherise.ngrok-free.dev/zerodha/callback"
-REDIRECT_URI = "https://047d-2405-201-5c06-81b9-786e-3f2b-1332-9289.ngrok-free.app/zerodha/callback"
+REDIRECT_URI = "https://9676-2405-201-5c06-81b9-89bf-4fc9-caf1-e9b7.ngrok-free.app/zerodha/callback"
 
 RESPONSE_TYPE = "code"
 GRANT_TYPE = "authorization_code"
@@ -111,6 +111,8 @@ def download_fyers_data(
     current_start = start_date
 
     while current_start < end_date:
+        
+        time.sleep(2)
 
         current_end = current_start + timedelta(days=chunk_days)
 
@@ -149,8 +151,7 @@ def download_fyers_data(
 
         current_start = current_end + timedelta(days=1)
         
-        time.sleep(2)
-
+        
     if not all_data:
         print("⚠ No data fetched")
         return None
@@ -161,15 +162,15 @@ def download_fyers_data(
     final_df = final_df.sort_values("datetime")
 
     if save_file:
-        os.makedirs(f"{timeframe}_data", exist_ok=True)
-        filename = f"{timeframe}_data/{symbol.replace(':','_')}_{timeframe}.parquet"
+        os.makedirs(f"{symbol.replace(':','_')}_data", exist_ok=True)
+        filename = f"{symbol.replace(':','_')}_data/{symbol.replace(':','_')}_{timeframe}.parquet"
         final_df.to_parquet(filename)
         print(f"💾 Saved to {filename}")
 
     return final_df
 
 symbols = [
-    "HDFCBANK",
+    # "HDFCBANK",
     # "ICICIBANK",
     # "SBIN",
     # "RELIANCE",
@@ -177,7 +178,7 @@ symbols = [
     # "TCS",
     # "TATAMOTORS",
     # "ADANIENT",
-    # "ITC"
+    "BHARTIARTL"
 ]
 
 if __name__ == "__main__":
