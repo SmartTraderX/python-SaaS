@@ -46,7 +46,14 @@ def volumecheck(data, min_high_vol_candles=2):
     avg20 = float(volume.iloc[-21:-1].mean())
 
     return (last5 > avg20).sum() > min_high_vol_candles
+def is_strong_candle(row):
+    body = abs(row["Close"] - row["Open"])
+    candle_range = row["High"] - row["Low"]
 
+    if candle_range == 0:
+        return False
+
+    return (body / candle_range) > 0.6
 def is_ema_retest(row, prev_row, tolerance=0.005):
 
     ema = prev_row["EMA20"]
@@ -290,28 +297,33 @@ def swingHigh_volume_trend_rsi_buy(data):
     except Exception as e:
         print("Error:", e)
         return False
-    
-def generateSignal(dataforTrade, dataForTrend=None):
-    if len(dataForTrend) < 50:
-       return None
+def generateSignal(dataforTrade, dataForTrend):
 
+    if len(dataForTrend) < 200:
+        return None
 
     trend = check_market_trend(dataForTrend)
+
     dataforTrade["EMA20"] = tb.EMA(dataforTrade["Close"], timeperiod=20)
+
     row = dataforTrade.iloc[-1]
     prev_row = dataforTrade.iloc[-2]
-    
-    
-    buy_signal, sell_signal = is_ema_retest(row, prev_row)
-    
-    print(trend)
-    print("sell_signal",sell_signal)
-    print("buy_signal",buy_signal)
 
-    if buy_signal and trend == "STRONG_UPTREND":
+    buy_signal, sell_signal = is_ema_retest(row, prev_row)
+
+    # ✅ Volume filter
+    avg_vol = dataforTrade["Volume"].rolling(20).mean().iloc[-1]
+    # volume_spike = row["Volume"] > avg_vol
+
+    # ✅ Strong candle
+    # strong = is_strong_candle(row)
+    rsidata = tb.RSI(dataforTrade["Close"], timeperiod=14)
+    strong = rsidata.iloc[-1] > 60 if buy_signal else rsidata.iloc[-1] < 40
+
+    if buy_signal and trend == "STRONG_UPTREND"  and strong:
         return "BUY"
 
-    elif sell_signal and trend == "STRONG_DOWNTREND":
+    elif sell_signal and trend == "STRONG_DOWNTREND" and strong:
         return "SELL"
 
     return None

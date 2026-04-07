@@ -36,10 +36,10 @@ intervals = {
 }
 
 
-def saveInJson(results):
+def saveInJson(results,symbolname = "SBIN"):
     import json
-    symbolname = "SBIN"
-    with open(f"results/NSE_HDFCBANK-EQ_15.json","w") as f:
+    
+    with open(f"results/NSE_{symbolname}.json","w") as f:
         json.dump({"results":results},f ,indent=4)
         print("save succesfully")
 
@@ -101,21 +101,27 @@ def calculate_atr(data, period=14):
     atr = tr.rolling(period).mean()
 
     return atr
-
-def create_position(signal, price, data, capital, risk_percent,atr):
+def create_position(signal, price, data, capital, risk_percent, atr):
 
     risk_amount = capital * risk_percent
 
-    # BUY
+    if atr is None or atr == 0:
+        return None
+
+    # 🟢 BUY
     if signal == "BUY":
+        # sl = price - (atr * 1.2)
+        # tp = price + (atr * 2.5)
         sl = price - 7
-        tp = price +15
+        tp = price + 15
         sl_points = price - sl
 
-    # SELL
+    # 🔴 SELL
     elif signal == "SELL":
+        # sl = price + (atr * 1.2)
+        # tp = price - (atr * 2.5)
         sl = price + 7
-        tp = price -15
+        tp = price - 14
         sl_points = sl - price
 
     else:
@@ -131,85 +137,72 @@ def create_position(signal, price, data, capital, risk_percent,atr):
 
     return {
         "id": str(uuid.uuid4()),
-        "capital":capital,
+        "capital": capital,
         "type": signal,
         "qty": qty,
         "entry_price": price,
         "sl_price": sl,
         "tp_price": tp,
-        "atr":atr
+        "atr": atr
     }
+    
+    
 def update_trailing_sl(pos, current_price, atr):
 
+    if atr is None:
+        return pos
+
+    # 🟢 BUY
     if pos["type"] == "BUY":
+        new_sl = current_price - atr * 1.5
+        if new_sl > pos["sl_price"]:
+            pos["sl_price"] = new_sl
 
-        if current_price > pos["entry_price"] + (1.5 * atr):
-
-            new_sl = current_price - (1.5 * atr)
-
-            if new_sl > pos["sl_price"]:
-                pos["sl_price"] = new_sl
-
+    # 🔴 SELL
     elif pos["type"] == "SELL":
+        new_sl = current_price + atr * 1.5
+        if new_sl < pos["sl_price"]:
+            pos["sl_price"] = new_sl
 
-        if current_price < pos["entry_price"] - (1.5 * atr):
-
-            new_sl = current_price + (1.5 * atr)
-
-            if new_sl < pos["sl_price"]:
-                pos["sl_price"] = new_sl
-
-    return pos
-
-def move_to_cost(pos, current_price, atr):
-
-    if pos["type"] == "BUY":
-        if current_price > pos["entry_price"] + (1 * atr):
-            pos["sl_price"] = max(pos["sl_price"], pos["entry_price"])
-
-    elif pos["type"] == "SELL":
-        if current_price < pos["entry_price"] - (1 * atr):
-            pos["sl_price"] = min(pos["sl_price"], pos["entry_price"])
-
-    return pos
+    return pos    
 def check_exit(pos, high, low):
 
     # 🟢 BUY position
     if pos["type"] == "BUY":
-        if high >= pos["tp_price"]:
-            pnl = (pos["tp_price"] - pos["entry_price"]) * pos["qty"]
-            return True, pnl, "TP Hit"
-            
+        
+        # SL first (conservative)
         if low <= pos["sl_price"]:
             pnl = (pos["sl_price"] - pos["entry_price"]) * pos["qty"]
             return True, pnl, "SL Hit"
 
+        if high >= pos["tp_price"]:
+            pnl = (pos["tp_price"] - pos["entry_price"]) * pos["qty"]
+            return True, pnl, "TP Hit"
+
     # 🔴 SELL position
     elif pos["type"] == "SELL":
-        if low <= pos["tp_price"]:
-            pnl = (pos["entry_price"] - pos["tp_price"]) * pos["qty"]
-            return True, pnl, "TP Hit"
-            
+
+        # SL first (conservative)
         if high >= pos["sl_price"]:
             pnl = (pos["entry_price"] - pos["sl_price"]) * pos["qty"]
             return True, pnl, "SL Hit"
 
-    return False, 0, None
+        if low <= pos["tp_price"]:
+            pnl = (pos["entry_price"] - pos["tp_price"]) * pos["qty"]
+            return True, pnl, "TP Hit"
 
+    return False, 0, None
 def Backtest_Worker_Testing_sync(symbolName):
     try:
         print(f"🔹 {symbolName}: Worker started")
 
-        data = pd.read_parquet(f"NSE_{symbolName}-EQ_data/NSE_{symbolName}-EQ_15.parquet")
+        data = pd.read_parquet(f"NSE_{symbolName}-EQ_data/NSE_{symbolName}-EQ_60.parquet")
         data_1h = pd.read_parquet(f"NSE_{symbolName}-EQ_data/NSE_{symbolName}-EQ_240.parquet")
 
         data = data.set_index(pd.to_datetime(data["datetime"]))
         data_1h = data_1h.set_index(pd.to_datetime(data_1h["datetime"]))
 
         print(f"✅ {symbolName}: Data loaded successfully")
-
-
-        # print(data.head())
 
         if data is None or data.empty:
             raise ValueError("No data returned")
@@ -222,61 +215,73 @@ def Backtest_Worker_Testing_sync(symbolName):
 
         if data_1h.index.tz is None:
             data_1h.index = data_1h.index.tz_localize("UTC").tz_convert("Asia/Kolkata")
-            
+
+        # ✅ ATR
         data["ATR"] = calculate_atr(data)
-        os.makedirs("Atrs",exist_ok=True)
-        pd.DataFrame(data["ATR"]).to_json("Atrs/atr.json", orient="records",indent=4)
-        intital = 1000000
-        capital = intital
+
+        # ===== CAPITAL =====
+        initial = 1000000
+        capital = initial
+
         MAX_POSITIONS = 3
-        risk_percent = 0.01
+        risk_percent = 0.02   # 🔥 increased risk
         risk_per_trade = risk_percent / MAX_POSITIONS
+
         positions = []
         backtestResults = []
-        equity_curve = []
-        equity_curve.append(intital)
-       
-        signal_count = 0
+        equity_curve = [initial]
 
-        start_index = 50
-        
+        start_index = 200  # enough data for EMA200
+
         for idx in range(start_index, len(data)):
-            
+
             equity_curve.append(capital)
+
             newData = data.iloc[:idx]
             currentTime = newData.index[-1]
-            close_price = float(data["Open"].iloc[idx])   # next candle entry
+
+            entry_price = float(data["Open"].iloc[idx])  # next candle entry
+            current_price = float(data["Close"].iloc[idx])
 
             newdata_60h = data_1h[data_1h.index <= currentTime]
             if newdata_60h.empty:
                 continue
 
+            # ===== SIGNAL =====
             signal = generateSignal(newData, newdata_60h)
-            
-            # ENTRY
-            current_atr = data["ATR"].iloc[idx-1] 
-            new_pos = create_position(signal,close_price, newData, capital, risk_per_trade,current_atr)
+
+            current_atr = data["ATR"].iloc[idx - 1]
+
+            # ===== ENTRY =====
+            new_pos = create_position(
+                signal,
+                entry_price,
+                newData,
+                capital,
+                risk_per_trade,
+                current_atr
+            )
 
             if new_pos and len(positions) < MAX_POSITIONS:
                 new_pos["entry_time"] = str(currentTime)
                 positions.append(new_pos)
-                signal_count += 1
 
-            # EXIT
+            # ===== EXIT =====
             high = float(data["High"].iloc[idx])
             low = float(data["Low"].iloc[idx])
 
             active_positions = []
-            current_price = float(data["Close"].iloc[idx])
-            
 
             for pos in positions:
+
+                # 🔥 TRAILING SL ENABLED
                 # pos = update_trailing_sl(pos, current_price, current_atr)
-                # pos = move_to_cost(pos, current_price, pos["atr"])
+
                 closed, pnl, reason = check_exit(pos, high, low)
 
                 if closed:
                     capital += pnl
+
                     pos["pnl"] = pnl
                     pos["exit_time"] = str(currentTime)
                     pos["exit_price"] = current_price
@@ -284,42 +289,46 @@ def Backtest_Worker_Testing_sync(symbolName):
 
                     backtestResults.append(pos)
                     equity_curve.append(capital)
+
                 else:
                     active_positions.append(pos)
 
             positions = active_positions
 
-        # # ===== METRICS =====
-        metrics = calculate_metrics(backtestResults, equity_curve, intital)
+        # ===== METRICS =====
+        metrics = calculate_metrics(backtestResults, equity_curve, initial)
+
+        # ===== YEARLY RETURNS (FIXED LOGIC) =====
         yearly_return = {}
-        year_start_capital = 100000  # reset
-                
+
         df = pd.DataFrame(backtestResults)
-        df["exit_time"] = pd.to_datetime(df["exit_time"])
-        df["year"] = df["exit_time"].dt.year
-        yearly_pnl = df.groupby("year")["pnl"].sum()
 
+        if not df.empty:
+            df["exit_time"] = pd.to_datetime(df["exit_time"])
+            df["year"] = df["exit_time"].dt.year
 
-        for year, pnl in yearly_pnl.items():
-            pct = (pnl / year_start_capital) * 100
-            yearly_return[year] = round(pct, 2)
-            year_start_capital += pnl
+            capital_by_year = initial
 
-        # print(yearly_return)
-        
-        
+            for year, group in df.groupby("year"):
+                yearly_pnl = group["pnl"].sum()
+                pct = (yearly_pnl / capital_by_year) * 100
 
+                yearly_return[year] = round(pct, 2)
+
+                capital_by_year += yearly_pnl  # compounding
 
         print(f"{symbolName}: Done | Trades={len(backtestResults)} | Capital={capital:.2f}")
+
         return {
             "symbol": symbolName,
-            "yearly_return":yearly_return,
+            "yearly_return": yearly_return,
             "metrices": metrics,
             "trades": list(reversed(backtestResults))
         }
 
     except Exception as e:
-        print(f" {symbolName}: Error -> {e}")
+        print(f"{symbolName}: Error -> {e}")
+
         return {
             "symbol": symbolName,
             "error": str(e),
@@ -328,8 +337,9 @@ def Backtest_Worker_Testing_sync(symbolName):
         }
 if __name__ == "__main__":
 
-    results = Backtest_Worker_Testing_sync("HDFCBANK")
-    saveInJson(results)
+    symbolName = "HDFCBANK"
+    results = Backtest_Worker_Testing_sync(symbolName)
+    saveInJson(results,symbolName)
     print(results)
     
     # data = pd.read_parquet("60_data/NSE_HDFCBANK-EQ_60.parquet")
