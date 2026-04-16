@@ -345,7 +345,10 @@ if __name__ == "__main__":
 
     # symbolName = "HDFCBANK"
     # symbolName   ="RELIANCE-EQ"
-    symbolName   ="NIFTY50-INDEX"
+    # symbolName   ="NIFTY50-INDEX"
+    # symbolName   ="VINYLINDIA-EQ" 
+    symbolName="GALLANTT-EQ"
+    
     results = Backtest_Worker_Testing_sync(symbolName)
     saveInJson(results,symbolName)
     print(results)

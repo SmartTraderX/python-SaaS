@@ -178,7 +178,7 @@ symbols = [
     # "TCS",
     # "TATAMOTORS",
     # "ADANIENT",
-    "NIFTY50"
+    "GALLANTT"
 ]
 
 if __name__ == "__main__":
@@ -190,7 +190,7 @@ if __name__ == "__main__":
 
         download_fyers_data(
             fyers,
-            symbol=f"NSE:{i}-INDEX",
+            symbol=f"NSE:{i}-EQ",
             timeframe="240"
         )
         time.sleep(2)
