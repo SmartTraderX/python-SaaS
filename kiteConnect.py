@@ -10,7 +10,7 @@ import pandas as pd
 CLIENT_ID = "JDW5YNOJ7Q-100"
 SECRET_KEY = "KFT2BXKQCZ"
 # REDIRECT_URI = "https://suturally-interconfessional-sherise.ngrok-free.dev/zerodha/callback"
-REDIRECT_URI = "https://9676-2405-201-5c06-81b9-89bf-4fc9-caf1-e9b7.ngrok-free.app/zerodha/callback"
+REDIRECT_URI = "https://suturally-interconfessional-sherise.ngrok-free.dev/zerodha/callback"
 
 RESPONSE_TYPE = "code"
 GRANT_TYPE = "authorization_code"
@@ -178,7 +178,7 @@ symbols = [
     # "TCS",
     # "TATAMOTORS",
     # "ADANIENT",
-    "BHARTIARTL"
+    "NIFTY50"
 ]
 
 if __name__ == "__main__":
@@ -190,7 +190,7 @@ if __name__ == "__main__":
 
         download_fyers_data(
             fyers,
-            symbol=f"NSE:{i}-EQ",
-            timeframe="60"
+            symbol=f"NSE:{i}-INDEX",
+            timeframe="240"
         )
         time.sleep(2)

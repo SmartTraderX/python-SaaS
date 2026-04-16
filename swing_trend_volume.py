@@ -296,13 +296,18 @@ def swingHigh_volume_trend_rsi_buy(data):
             
     except Exception as e:
         print("Error:", e)
-        return False
-def generateSignal(dataforTrade, dataForTrend):
+ 
+def generateSignal(dataforTrade, dataForTrend1h, dataForTrend4h):
 
-    if len(dataForTrend) < 200:
+    if len(dataForTrend4h) < 200 or len(dataForTrend1h) < 200:
         return None
 
-    trend = check_market_trend(dataForTrend)
+    trend_4h = check_market_trend(dataForTrend4h)
+    trend_1h = check_market_trend(dataForTrend1h)
+
+    # ❌ Avoid sideways
+    if trend_4h == "SIDEWAYS" or trend_1h == "SIDEWAYS":
+        return None
 
     dataforTrade["EMA20"] = tb.EMA(dataforTrade["Close"], timeperiod=20)
 
@@ -311,19 +316,22 @@ def generateSignal(dataforTrade, dataForTrend):
 
     buy_signal, sell_signal = is_ema_retest(row, prev_row)
 
-    # ✅ Volume filter
-    avg_vol = dataforTrade["Volume"].rolling(20).mean().iloc[-1]
-    # volume_spike = row["Volume"] > avg_vol
-
-    # ✅ Strong candle
-    # strong = is_strong_candle(row)
+    # RSI
     rsidata = tb.RSI(dataforTrade["Close"], timeperiod=14)
-    strong = rsidata.iloc[-1] > 60 if buy_signal else rsidata.iloc[-1] < 40
 
-    if buy_signal and trend == "STRONG_UPTREND"  and strong:
+    # ✅ Better RSI logic
+    if buy_signal:
+        strong = rsidata.iloc[-1] > 60
+    elif sell_signal:
+        strong = rsidata.iloc[-1] < 40
+    else:
+        strong = False
+
+    # ✅ Multi-timeframe confirmation
+    if buy_signal and trend_4h == "STRONG_UPTREND" and trend_1h == "STRONG_UPTREND" and strong:
         return "BUY"
 
-    elif sell_signal and trend == "STRONG_DOWNTREND" and strong:
+    elif sell_signal and trend_4h == "STRONG_DOWNTREND" and trend_1h == "STRONG_DOWNTREND" and strong:
         return "SELL"
 
     return None

@@ -191,68 +191,80 @@ def check_exit(pos, high, low):
             pnl = (pos["entry_price"] - pos["tp_price"]) * pos["qty"]
             return True, pnl, "TP Hit"
 
+    # ✅ IMPORTANT: if nothing hit
     return False, 0, None
+
+  
 def Backtest_Worker_Testing_sync(symbolName):
     try:
         print(f"🔹 {symbolName}: Worker started")
 
-        data = pd.read_parquet(f"NSE_{symbolName}-EQ_data/NSE_{symbolName}-EQ_60.parquet")
-        data_1h = pd.read_parquet(f"NSE_{symbolName}-EQ_data/NSE_{symbolName}-EQ_240.parquet")
+        data_15m = pd.read_parquet(f"NSE_{symbolName}_data/NSE_{symbolName}_15.parquet")
+        data_1h = pd.read_parquet(f"NSE_{symbolName}_data/NSE_{symbolName}_60.parquet")
+        data_4h = pd.read_parquet(f"NSE_{symbolName}_data/NSE_{symbolName}_240.parquet")
 
-        data = data.set_index(pd.to_datetime(data["datetime"]))
+        # Index set
+        data_15m = data_15m.set_index(pd.to_datetime(data_15m["datetime"]))
         data_1h = data_1h.set_index(pd.to_datetime(data_1h["datetime"]))
+        data_4h = data_4h.set_index(pd.to_datetime(data_4h["datetime"]))
 
         print(f"✅ {symbolName}: Data loaded successfully")
 
-        if data is None or data.empty:
+        if data_15m is None or data_15m.empty:
             raise ValueError("No data returned")
 
-        data = fix_yf_multiindex(data)
+        data_15m = fix_yf_multiindex(data_15m)
 
-        # ---- Timezone fix ----
-        if data.index.tz is None:
-            data.index = data.index.tz_localize("UTC").tz_convert("Asia/Kolkata")
+        # Timezone fix
+        if data_15m.index.tz is None:
+            data_15m.index = data_15m.index.tz_localize("UTC").tz_convert("Asia/Kolkata")
 
         if data_1h.index.tz is None:
             data_1h.index = data_1h.index.tz_localize("UTC").tz_convert("Asia/Kolkata")
 
-        # ✅ ATR
-        data["ATR"] = calculate_atr(data)
+        if data_4h.index.tz is None:
+            data_4h.index = data_4h.index.tz_localize("UTC").tz_convert("Asia/Kolkata")
 
-        # ===== CAPITAL =====
+        # ATR
+        data_15m["ATR"] = calculate_atr(data_15m)
+
+        # CAPITAL
         initial = 1000000
         capital = initial
 
         MAX_POSITIONS = 3
-        risk_percent = 0.02   # 🔥 increased risk
+        risk_percent = 0.02
         risk_per_trade = risk_percent / MAX_POSITIONS
 
         positions = []
         backtestResults = []
         equity_curve = [initial]
 
-        start_index = 200  # enough data for EMA200
+        start_index = 200
 
-        for idx in range(start_index, len(data)):
+        for idx in range(start_index, len(data_15m)):
 
             equity_curve.append(capital)
 
-            newData = data.iloc[:idx]
+            newData = data_15m.iloc[:idx]
             currentTime = newData.index[-1]
 
-            entry_price = float(data["Open"].iloc[idx])  # next candle entry
-            current_price = float(data["Close"].iloc[idx])
+            entry_price = float(data_15m["Open"].iloc[idx])
+            current_price = float(data_15m["Close"].iloc[idx])
 
+            # 1H + 4H data slice
             newdata_60h = data_1h[data_1h.index <= currentTime]
-            if newdata_60h.empty:
+            newdata_4h = data_4h[data_4h.index <= currentTime]
+
+            if newdata_60h.empty or newdata_4h.empty:
                 continue
 
-            # ===== SIGNAL =====
-            signal = generateSignal(newData, newdata_60h)
+            # SIGNAL
+            signal = generateSignal(newData, newdata_60h, newdata_4h)
 
-            current_atr = data["ATR"].iloc[idx - 1]
+            current_atr = data_15m["ATR"].iloc[idx - 1]
 
-            # ===== ENTRY =====
+            # ENTRY
             new_pos = create_position(
                 signal,
                 entry_price,
@@ -266,16 +278,13 @@ def Backtest_Worker_Testing_sync(symbolName):
                 new_pos["entry_time"] = str(currentTime)
                 positions.append(new_pos)
 
-            # ===== EXIT =====
-            high = float(data["High"].iloc[idx])
-            low = float(data["Low"].iloc[idx])
+            # EXIT
+            high = float(data_15m["High"].iloc[idx])
+            low = float(data_15m["Low"].iloc[idx])
 
             active_positions = []
 
             for pos in positions:
-
-                # 🔥 TRAILING SL ENABLED
-                # pos = update_trailing_sl(pos, current_price, current_atr)
 
                 closed, pnl, reason = check_exit(pos, high, low)
 
@@ -295,12 +304,11 @@ def Backtest_Worker_Testing_sync(symbolName):
 
             positions = active_positions
 
-        # ===== METRICS =====
+        # METRICS
         metrics = calculate_metrics(backtestResults, equity_curve, initial)
 
-        # ===== YEARLY RETURNS (FIXED LOGIC) =====
+        # YEARLY RETURNS
         yearly_return = {}
-
         df = pd.DataFrame(backtestResults)
 
         if not df.empty:
@@ -314,8 +322,7 @@ def Backtest_Worker_Testing_sync(symbolName):
                 pct = (yearly_pnl / capital_by_year) * 100
 
                 yearly_return[year] = round(pct, 2)
-
-                capital_by_year += yearly_pnl  # compounding
+                capital_by_year += yearly_pnl
 
         print(f"{symbolName}: Done | Trades={len(backtestResults)} | Capital={capital:.2f}")
 
@@ -328,7 +335,6 @@ def Backtest_Worker_Testing_sync(symbolName):
 
     except Exception as e:
         print(f"{symbolName}: Error -> {e}")
-
         return {
             "symbol": symbolName,
             "error": str(e),
@@ -337,7 +343,9 @@ def Backtest_Worker_Testing_sync(symbolName):
         }
 if __name__ == "__main__":
 
-    symbolName = "HDFCBANK"
+    # symbolName = "HDFCBANK"
+    # symbolName   ="RELIANCE-EQ"
+    symbolName   ="NIFTY50-INDEX"
     results = Backtest_Worker_Testing_sync(symbolName)
     saveInJson(results,symbolName)
     print(results)

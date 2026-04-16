@@ -1,0 +1,8 @@
+{
+    "results": {
+        "symbol": "NIFTY50-INDEX",
+        "error": "[Errno 2] No such file or directory: 'NSE_NIFTY50-INDEX_data/NSE_NIFTY50-INDEX-EQ_15.parquet'",
+        "metrices": {},
+        "trades": []
+    }
+}
