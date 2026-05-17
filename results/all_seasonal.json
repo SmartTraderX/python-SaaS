@@ -1,0 +1,193 @@
+{
+    "RELIANCE.NS": {
+        "summer": {
+            "initial_capital": 1000000,
+            "final_value": 6653266.21,
+            "symbol": "RELIANCE.NS_summer",
+            "cagr": 18.42,
+            "drawdown": -36.87,
+            "winrate": 52.19,
+            "trades": 28
+        },
+        "monsoon": {
+            "initial_capital": 1000000,
+            "final_value": 5658873.98,
+            "symbol": "RELIANCE.NS_monsoon",
+            "cagr": 18.41,
+            "drawdown": -25.43,
+            "winrate": 52.75,
+            "trades": 21
+        },
+        "festive": {
+            "initial_capital": 1000000,
+            "final_value": 8087292.55,
+            "symbol": "RELIANCE.NS_festive",
+            "cagr": 22.83,
+            "drawdown": -19.11,
+            "winrate": 54.13,
+            "trades": 13
+        },
+        "winter": {
+            "initial_capital": 1000000,
+            "final_value": 7157683.32,
+            "symbol": "RELIANCE.NS_winter",
+            "cagr": 19.28,
+            "drawdown": -19.38,
+            "winrate": 50.29,
+            "trades": 22
+        }
+    },
+    "TATAMOTORS.NS": null,
+    "VBL.NS": {
+        "summer": {
+            "initial_capital": 1000000,
+            "final_value": 9752791.53,
+            "symbol": "VBL.NS_summer",
+            "cagr": 28.05,
+            "drawdown": -41.5,
+            "winrate": 50.56,
+            "trades": 11
+        },
+        "monsoon": {
+            "initial_capital": 1000000,
+            "final_value": 14458668.31,
+            "symbol": "VBL.NS_monsoon",
+            "cagr": 38.24,
+            "drawdown": -33.94,
+            "winrate": 49.29,
+            "trades": 10
+        },
+        "festive": {
+            "initial_capital": 1000000,
+            "final_value": 2496192.4,
+            "symbol": "VBL.NS_festive",
+            "cagr": 10.62,
+            "drawdown": -73.24,
+            "winrate": 49.33,
+            "trades": 3
+        },
+        "winter": {
+            "initial_capital": 1000000,
+            "final_value": 10694558.3,
+            "symbol": "VBL.NS_winter",
+            "cagr": 29.21,
+            "drawdown": -33.14,
+            "winrate": 52.21,
+            "trades": 15
+        }
+    },
+    "COALINDIA.NS": {
+        "summer": {
+            "initial_capital": 1000000,
+            "final_value": 1421301.04,
+            "symbol": "COALINDIA.NS_summer",
+            "cagr": 3.19,
+            "drawdown": -65.89,
+            "winrate": 51.67,
+            "trades": 32
+        },
+        "monsoon": {
+            "initial_capital": 1000000,
+            "final_value": 570419.88,
+            "symbol": "COALINDIA.NS_monsoon",
+            "cagr": -5.33,
+            "drawdown": -78.38,
+            "winrate": 46.36,
+            "trades": 22
+        },
+        "festive": {
+            "initial_capital": 1000000,
+            "final_value": 75164.2,
+            "symbol": "COALINDIA.NS_festive",
+            "cagr": -22.47,
+            "drawdown": -96.02,
+            "winrate": 49.65,
+            "trades": 21
+        },
+        "winter": {
+            "initial_capital": 1000000,
+            "final_value": 2092106.03,
+            "symbol": "COALINDIA.NS_winter",
+            "cagr": 6.84,
+            "drawdown": -46.92,
+            "winrate": 51.11,
+            "trades": 19
+        }
+    },
+    "HAVELLS.NS": {
+        "summer": {
+            "initial_capital": 1000000,
+            "final_value": 1457968.77,
+            "symbol": "HAVELLS.NS_summer",
+            "cagr": 3.42,
+            "drawdown": -55.59,
+            "winrate": 49.68,
+            "trades": 27
+        },
+        "monsoon": {
+            "initial_capital": 1000000,
+            "final_value": 5324750.07,
+            "symbol": "HAVELLS.NS_monsoon",
+            "cagr": 17.71,
+            "drawdown": -29.21,
+            "winrate": 53.1,
+            "trades": 23
+        },
+        "festive": {
+            "initial_capital": 1000000,
+            "final_value": 6087010.85,
+            "symbol": "HAVELLS.NS_festive",
+            "cagr": 19.44,
+            "drawdown": -31.15,
+            "winrate": 51.71,
+            "trades": 13
+        },
+        "winter": {
+            "initial_capital": 1000000,
+            "final_value": 4228845.1,
+            "symbol": "HAVELLS.NS_winter",
+            "cagr": 13.79,
+            "drawdown": -30.33,
+            "winrate": 50.55,
+            "trades": 27
+        }
+    },
+    "UPL.NS": {
+        "summer": {
+            "initial_capital": 1000000,
+            "final_value": 102919.25,
+            "symbol": "UPL.NS_summer",
+            "cagr": -18.36,
+            "drawdown": -92.51,
+            "winrate": 49.41,
+            "trades": 31
+        },
+        "monsoon": {
+            "initial_capital": 1000000,
+            "final_value": 40614.15,
+            "symbol": "UPL.NS_monsoon",
+            "cagr": -26.83,
+            "drawdown": -96.49,
+            "winrate": 47.69,
+            "trades": 16
+        },
+        "festive": {
+            "initial_capital": 1000000,
+            "final_value": 573482.57,
+            "symbol": "UPL.NS_festive",
+            "cagr": -5.32,
+            "drawdown": -72.35,
+            "winrate": 52.4,
+            "trades": 16
+        },
+        "winter": {
+            "initial_capital": 1000000,
+            "final_value": 541394.03,
+            "symbol": "UPL.NS_winter",
+            "cagr": -5.35,
+            "drawdown": -79.49,
+            "winrate": 49.01,
+            "trades": 20
+        }
+    }
+}
