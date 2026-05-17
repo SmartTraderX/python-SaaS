@@ -1,0 +1,50 @@
+{
+    "summer": {
+        "symbol": "RELIANCE.NS",
+        "initial_capital": 100000,
+        "final_value": 127999.99999999999,
+        "cagr": 2.23,
+        "max_drawdown": -36.0,
+        "win_rate": 35.75,
+        "total_trades": 193,
+        "buy_signals": 168,
+        "sell_signals": 99,
+        "timestamp": "2026-05-17T17:55:47.486459"
+    },
+    "monsoon": {
+        "symbol": "RELIANCE.NS",
+        "initial_capital": 100000,
+        "final_value": 102000.00000000041,
+        "cagr": 0.19,
+        "max_drawdown": -33.33,
+        "win_rate": 33.46,
+        "total_trades": 254,
+        "buy_signals": 251,
+        "sell_signals": 126,
+        "timestamp": "2026-05-17T17:55:47.684892"
+    },
+    "festive": {
+        "symbol": "RELIANCE.NS",
+        "initial_capital": 100000,
+        "final_value": 117999.99999999997,
+        "cagr": 1.65,
+        "max_drawdown": -17.46,
+        "win_rate": 37.33,
+        "total_trades": 75,
+        "buy_signals": 78,
+        "sell_signals": 31,
+        "timestamp": "2026-05-17T17:55:47.741263"
+    },
+    "winter": {
+        "symbol": "RELIANCE.NS",
+        "initial_capital": 100000,
+        "final_value": 43999.99999999968,
+        "cagr": -7.09,
+        "max_drawdown": -66.67,
+        "win_rate": 29.64,
+        "total_trades": 253,
+        "buy_signals": 228,
+        "sell_signals": 123,
+        "timestamp": "2026-05-17T17:55:47.931354"
+    }
+}

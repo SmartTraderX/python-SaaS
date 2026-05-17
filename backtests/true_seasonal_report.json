@@ -1,0 +1,52 @@
+{
+    "VOLTAS.NS": {
+        "symbol": "VOLTAS.NS",
+        "initial_capital": 100000,
+        "final_value": 147999.99999999988,
+        "cagr": 3.51,
+        "max_drawdown": -32.0,
+        "win_rate": 36.43,
+        "total_trades": 258,
+        "timestamp": "2026-05-17T18:12:57.551534"
+    },
+    "HAVELLS.NS": {
+        "symbol": "HAVELLS.NS",
+        "initial_capital": 100000,
+        "final_value": 61999.99999999985,
+        "cagr": -4.12,
+        "max_drawdown": -76.0,
+        "win_rate": 30.86,
+        "total_trades": 256,
+        "timestamp": "2026-05-17T18:13:01.042579"
+    },
+    "MARUTI.NS": {
+        "symbol": "MARUTI.NS",
+        "initial_capital": 100000,
+        "final_value": 117177.86557092633,
+        "cagr": 1.4,
+        "max_drawdown": -42.65,
+        "win_rate": 34.97,
+        "total_trades": 183,
+        "timestamp": "2026-05-17T18:13:02.271754"
+    },
+    "TITAN.NS": {
+        "symbol": "TITAN.NS",
+        "initial_capital": 100000,
+        "final_value": 41207.613369591774,
+        "cagr": -7.5,
+        "max_drawdown": -73.64,
+        "win_rate": 29.73,
+        "total_trades": 259,
+        "timestamp": "2026-05-17T18:13:03.616164"
+    },
+    "COROMANDEL.NS": {
+        "symbol": "COROMANDEL.NS",
+        "initial_capital": 100000,
+        "final_value": -108000.00000000019,
+        "cagr": -100.0,
+        "max_drawdown": -208.0,
+        "win_rate": 18.26,
+        "total_trades": 230,
+        "timestamp": "2026-05-17T18:13:05.210539"
+    }
+}

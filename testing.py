@@ -1,145 +1,138 @@
-import yfinance as yf
-import pandas as pd
-import numpy as np
 import os
 import json
+import numpy as np
+import pandas as pd
+import yfinance as yf
 from datetime import datetime
 
-def get_season(month):
-    if month in [3, 4, 5, 6]:
-        return "summer"
-    elif month in [7, 8, 9]:
-        return "monsoon"
-    elif month in [10, 11]:
-        return "festive"
-    else:
-        return "winter"
+def pct(x):
+    return float(round(float(x) * 100, 2))
 
-def get_season(month):
-    if month in [3, 4, 5]:
-        return "summer"
-    elif month in [6, 7, 8, 9]:
-        return "monsoon"
-    elif month in [10]:
-        return "festive"
-    else:
-        return "winter"
-
-
-def get_seasonal_data(symbol):
-    # 1. Download data
-    df = yf.download(symbol, start="2015-01-01", progress=False).copy()
-
-    if df.empty:
+def runSeasonalPositional(df, entry_months, initial_capital=100000, risk_per_trade=0.05):
+    """
+    Pure Seasonal Positional Strategy:
+    - Enters a position at the start of the peak season.
+    - Uses a wider 5% Stop Loss to survive market noise.
+    - NO target profit; rides the entire season wave.
+    - Forcibly exits when the season ends.
+    """
+    if df.empty or len(df) < 5:
         return None
 
-    # 2. Fix MultiIndex issue (if any)
-    if isinstance(df.columns, pd.MultiIndex):
-        df.columns = df.columns.get_level_values(0)
+    df = df.copy()
+    df.index = pd.to_datetime(df.index)
+    df["current_month"] = df.index.month
 
-    # 3. Add symbol column
-    df["symbol"] = symbol
+    df["trade_pnl"] = 0.0
+    position = 0  # 1: In Trade, 0: Flat
+    entry_price = 0.0
+    qty = 0.0
+    capital = initial_capital
 
-    # 4. Create month + season
-    df["month"] = df.index.month
-    df["season"] = df["month"].apply(get_season)
+    for i in range(len(df)):
+        current_month = df["current_month"].iloc[i]
+        high = df["High"].iloc[i]
+        low = df["Low"].iloc[i]
+        close = df["Close"].iloc[i]
 
-    # 5. Prepare final output
-    season_data = {
-        "summer": df[df["season"] == "summer"].drop(columns=["month", "season"]).copy(),
-        "monsoon": df[df["season"] == "monsoon"].drop(columns=["month", "season"]).copy(),
-        "festive": df[df["season"] == "festive"].drop(columns=["month", "season"]).copy(),
-        "winter": df[df["season"] == "winter"].drop(columns=["month", "season"]).copy(),
+        # 1. EXIT LOGIC (If we are holding a stock)
+        if position == 1:
+            # Rule A: Stop Loss Hit (5% Drop from Entry)
+            if low <= entry_price * 0.95:
+                pnl = (entry_price * 0.95 - entry_price) * qty
+                df.at[df.index[i], "trade_pnl"] = pnl
+                capital += pnl
+                position = 0
+            
+            # Rule B: Season Ends -> Force Square-off at Closing Price
+            elif current_month not in entry_months:
+                pnl = (close - entry_price) * qty
+                df.at[df.index[i], "trade_pnl"] = pnl
+                capital += pnl
+                position = 0
+
+        # 2. ENTRY LOGIC (If we are flat and a new season window opens)
+        # We enter if the month is correct AND the previous day wasn't already in the season (Season Start)
+        elif position == 0 and current_month in entry_months:
+            # Safety check to ensure we only enter at the START of the season, not every single day
+            if i > 0 and df["current_month"].iloc[i-1] not in entry_months:
+                if capital > 0:  # Protect against going negative
+                    position = 1
+                    entry_price = close
+                    # Deploying 95% of current capital into the stock for positional delivery
+                    qty = (capital * 0.95) / entry_price 
+
+    # Re-calculate equity curve based on actual accounted capital
+    df["equity_curve"] = (initial_capital + df["trade_pnl"].cumsum()) / initial_capital
+    return df
+
+def calculate_performance(df, symbol, initial_capital):
+    if df is None or df.empty:
+        return {}
+
+    final_value = initial_capital * df["equity_curve"].iloc[-1]
+
+    df["peak"] = df["equity_curve"].cummax()
+    df["drawdown"] = (df["equity_curve"] - df["peak"]) / df["peak"]
+    max_dd = df["drawdown"].min()
+
+    years = (df.index[-1] - df.index[0]).days / 365.25
+    if years <= 0:
+        years = 1.0
+
+    cagr = (final_value / initial_capital) ** (1 / years) - 1 if final_value > 0 else -1
+
+    trade_returns = df["trade_pnl"][df["trade_pnl"] != 0]
+    total_trades = len(trade_returns)
+    win_rate = (trade_returns > 0).mean() if total_trades > 0 else 0
+
+    return {
+        "symbol": symbol,
+        "initial_capital": initial_capital,
+        "final_value": float(final_value),
+        "cagr": pct(cagr),
+        "max_drawdown": pct(max_dd),
+        "win_rate": pct(win_rate),
+        "total_trades": int(total_trades),
+        "timestamp": datetime.now().isoformat()
     }
 
-    return season_data
+# ==========================================
+# RUNNING THE NEW SYSTEM
+# ==========================================
+if __name__ == "__main__":
+    os.makedirs("backtests", exist_ok=True)
 
-def convert_lightweight(data):
-    json_data = {}
+    # Specific Stocks mapped to their structural Peak Seasons
+    seasonal_baskets = {
+        "VOLTAS.NS": [3, 4, 5, 6],       # Summer (March - June)
+        "HAVELLS.NS": [3, 4, 5, 6],      # Summer (March - June)
+        "MARUTI.NS": [9, 10, 11],        # Festive (Sept - Nov)
+        "TITAN.NS": [10, 11, 12, 1],     # Festive & Wedding (Oct - Jan)
+        "COROMANDEL.NS": [6, 7, 8, 9]    # Monsoon/Agri (June - Sept)
+    }
 
-    for season, df in data.items():
-        temp = df.reset_index()[["Date", "Close"]]
-        json_data[season] = temp.to_dict(orient="records")
+    final_report = {}
 
-    return json_data
+    print("--- Running Pure Seasonal Positional Holding (2015 - Present) ---\n")
 
+    for symbol, peak_months in seasonal_baskets.items():
+        raw_df = yf.download(symbol, start="2015-01-01", progress=False)
+        
+        if raw_df.empty:
+            continue
+            
+        if isinstance(raw_df.columns, pd.MultiIndex):
+            raw_df.columns = raw_df.columns.get_level_values(0)
 
+        # Run the new positional logic
+        result_df = runSeasonalPositional(raw_df, entry_months=peak_months)
+        stats = calculate_performance(result_df, symbol, initial_capital=100000)
+        final_report[symbol] = stats
+        
+        print(f"{symbol} -> Trades: {stats['total_trades']} | Win Rate: {stats['win_rate']}% | CAGR: {stats['cagr']}% | MaxDD: {stats['max_drawdown']}%")
 
-def runStrategy(df):
-    
-    initial_capital = 100000
-    risk_per_trade = 0.02  # 2%
-    
-    if df.empty:
-        print("DataFrame is empty. Cannot run strategy.")
-        return None
-    
-    window = 5
-    
-    # Calculate swing highs and lows
-  # Calculate swing highs and lows (non-repainting basic version)
-
-    df["swing_high"] = (
-        (df["High"] > df["High"].shift(1)) &
-        (df["High"] > df["High"].shift(2))
-    )
-
-    df["swing_low"] = (
-        (df["Low"] < df["Low"].shift(1)) &
-        (df["Low"] < df["Low"].shift(2))
-    )
-
-    # Mark the actual swing points
-    df["last_swing_high"] = np.where(df["swing_high"], df["High"], np.nan)
-    df["last_swing_low"]  = np.where(df["swing_low"], df["Low"], np.nan)
-    
-    # Forward fill the last swing points to use them for BOS detection
-    df["last_swing_high"] = df["last_swing_high"].ffill()
-    df["last_swing_low"] = df["last_swing_low"].ffill()
-    
-    # Detect Break of Structure (BOS)
-    df["bos"] = df["Close"] > df["last_swing_high"]
-    df["bos_down"] = df["Close"] < df["last_swing_low"]
-    
-    # Calculate the range of the candle
-    df["range"] = (df["High"] - df["Low"]) / df["Close"]
-    df["range_ok"] = df["range"] > 0.01   # 1% move minimum
-    
-    
-    # Generate buy/sell signals based on BOS and range
-    df["buy_signal"] = (df["bos"] & df["range_ok"]).shift(1)  # Buy on the next candle after BOS up
-    df["sell_signal"] = (df["bos_down"] & df["range_ok"]).shift(1)  # Sell on the next candle after BOS down
-    
-    # Clean up signals
-    df["buy_signal"] = df["buy_signal"].fillna(0).astype(int)
-    df["sell_signal"] = df["sell_signal"].fillna(0).astype(int)
-    
-    df["risk_amount"] = initial_capital * risk_per_trade
-
-    df["qty"] = df["risk_amount"] / (df["entry_price"] * 0.01)
-    
-    df["position"] = 0
-
-    # Set position based on signals
-    df.loc[df["buy_signal"] == 1, "position"] = 1
-    df.loc[df["sell_signal"] == 1, "position"] = -1
-    df["position"] = df["position"].replace(0,np.nan).ffill().fillna(0)
-
-
-    df["entry_price"] = df["Close"].where(df["position"].diff() != 0).ffill()
-    df["position_value"] = df["qty"] * df["entry_price"]
-    
-    
-    df["sl_price"] = np.where(df["position"] == 1, df["entry_price"] * 0.99)  # 1% stop loss for long
-    df["tp_price"] = np.where(df["position"] == 1, df["entry_price"] * 1.02)  # 2% take profit for long
-    
-    
-    
-    
-    
-
-    
-    # json_data = convert_lightweight(data)
-
-# with open("seasonal_data.json", "w") as f:
-#     json.dump(json_data, f, indent=4)           
+    # Save to JSON
+    with open("backtests/positional_seasonal_report.json", "w") as f:
+        json.dump(final_report, f, indent=4)
+        
