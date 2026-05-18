@@ -1,0 +1,667 @@
+{
+    "VOLTAS.NS": {
+        "Jan-Apr (Months 1-4)": {
+            "symbol": "VOLTAS.NS",
+            "window": "Jan-Apr (Months 1-4)",
+            "initial_capital": 100000,
+            "final_value": 106248.31100078944,
+            "cagr": 0.59,
+            "max_drawdown": -4.96,
+            "win_rate": 54.55,
+            "total_trades": 11,
+            "timestamp": "2026-05-18T23:42:11.787934"
+        },
+        "May-Aug (Months 5-8)": {
+            "symbol": "VOLTAS.NS",
+            "window": "May-Aug (Months 5-8)",
+            "initial_capital": 100000,
+            "final_value": 107481.30628397803,
+            "cagr": 0.7,
+            "max_drawdown": -10.42,
+            "win_rate": 40.0,
+            "total_trades": 10,
+            "timestamp": "2026-05-18T23:42:11.906539"
+        },
+        "Sep-Dec (Months 9-12)": {
+            "symbol": "VOLTAS.NS",
+            "window": "Sep-Dec (Months 9-12)",
+            "initial_capital": 100000,
+            "final_value": 103631.46380008133,
+            "cagr": 0.34,
+            "max_drawdown": -17.1,
+            "win_rate": 40.0,
+            "total_trades": 10,
+            "timestamp": "2026-05-18T23:42:12.052755"
+        }
+    },
+    "BLUESTARCO.NS": {
+        "Jan-Apr (Months 1-4)": {
+            "symbol": "BLUESTARCO.NS",
+            "window": "Jan-Apr (Months 1-4)",
+            "initial_capital": 100000,
+            "final_value": 85591.00202089915,
+            "cagr": -1.49,
+            "max_drawdown": -17.48,
+            "win_rate": 36.36,
+            "total_trades": 11,
+            "timestamp": "2026-05-18T23:42:13.418764"
+        },
+        "May-Aug (Months 5-8)": {
+            "symbol": "BLUESTARCO.NS",
+            "window": "May-Aug (Months 5-8)",
+            "initial_capital": 100000,
+            "final_value": 115905.70375383909,
+            "cagr": 1.43,
+            "max_drawdown": -11.06,
+            "win_rate": 60.0,
+            "total_trades": 10,
+            "timestamp": "2026-05-18T23:42:13.536651"
+        },
+        "Sep-Dec (Months 9-12)": {
+            "symbol": "BLUESTARCO.NS",
+            "window": "Sep-Dec (Months 9-12)",
+            "initial_capital": 100000,
+            "final_value": 94256.17376791996,
+            "cagr": -0.57,
+            "max_drawdown": -15.85,
+            "win_rate": 30.0,
+            "total_trades": 10,
+            "timestamp": "2026-05-18T23:42:13.658433"
+        }
+    },
+    "HAVELLS.NS": {
+        "Jan-Apr (Months 1-4)": {
+            "symbol": "HAVELLS.NS",
+            "window": "Jan-Apr (Months 1-4)",
+            "initial_capital": 100000,
+            "final_value": 113858.23547511952,
+            "cagr": 1.26,
+            "max_drawdown": -8.83,
+            "win_rate": 36.36,
+            "total_trades": 11,
+            "timestamp": "2026-05-18T23:42:14.822038"
+        },
+        "May-Aug (Months 5-8)": {
+            "symbol": "HAVELLS.NS",
+            "window": "May-Aug (Months 5-8)",
+            "initial_capital": 100000,
+            "final_value": 98912.71106517619,
+            "cagr": -0.11,
+            "max_drawdown": -9.38,
+            "win_rate": 45.45,
+            "total_trades": 11,
+            "timestamp": "2026-05-18T23:42:14.938748"
+        },
+        "Sep-Dec (Months 9-12)": {
+            "symbol": "HAVELLS.NS",
+            "window": "Sep-Dec (Months 9-12)",
+            "initial_capital": 100000,
+            "final_value": 80492.60478470587,
+            "cagr": -2.07,
+            "max_drawdown": -19.57,
+            "win_rate": 30.0,
+            "total_trades": 10,
+            "timestamp": "2026-05-18T23:42:15.053593"
+        }
+    },
+    "AMBER.NS": {
+        "Jan-Apr (Months 1-4)": {
+            "symbol": "AMBER.NS",
+            "window": "Jan-Apr (Months 1-4)",
+            "initial_capital": 100000,
+            "final_value": 122678.94514996951,
+            "cagr": 2.49,
+            "max_drawdown": -11.41,
+            "win_rate": 22.22,
+            "total_trades": 9,
+            "timestamp": "2026-05-18T23:42:16.104601"
+        },
+        "May-Aug (Months 5-8)": {
+            "symbol": "AMBER.NS",
+            "window": "May-Aug (Months 5-8)",
+            "initial_capital": 100000,
+            "final_value": 75718.18827050427,
+            "cagr": -3.3,
+            "max_drawdown": -24.87,
+            "win_rate": 11.11,
+            "total_trades": 9,
+            "timestamp": "2026-05-18T23:42:16.188788"
+        },
+        "Sep-Dec (Months 9-12)": {
+            "symbol": "AMBER.NS",
+            "window": "Sep-Dec (Months 9-12)",
+            "initial_capital": 100000,
+            "final_value": 87317.71925021027,
+            "cagr": -1.62,
+            "max_drawdown": -18.14,
+            "win_rate": 25.0,
+            "total_trades": 8,
+            "timestamp": "2026-05-18T23:42:16.288481"
+        }
+    },
+    "MARUTI.NS": {
+        "Jan-Apr (Months 1-4)": {
+            "symbol": "MARUTI.NS",
+            "window": "Jan-Apr (Months 1-4)",
+            "initial_capital": 100000,
+            "final_value": 112108.9544589321,
+            "cagr": 1.11,
+            "max_drawdown": -2.55,
+            "win_rate": 54.55,
+            "total_trades": 11,
+            "timestamp": "2026-05-18T23:42:17.553743"
+        },
+        "May-Aug (Months 5-8)": {
+            "symbol": "MARUTI.NS",
+            "window": "May-Aug (Months 5-8)",
+            "initial_capital": 100000,
+            "final_value": 91723.74695135104,
+            "cagr": -0.83,
+            "max_drawdown": -8.91,
+            "win_rate": 27.27,
+            "total_trades": 11,
+            "timestamp": "2026-05-18T23:42:17.670578"
+        },
+        "Sep-Dec (Months 9-12)": {
+            "symbol": "MARUTI.NS",
+            "window": "Sep-Dec (Months 9-12)",
+            "initial_capital": 100000,
+            "final_value": 125062.1369216244,
+            "cagr": 2.18,
+            "max_drawdown": -7.89,
+            "win_rate": 50.0,
+            "total_trades": 10,
+            "timestamp": "2026-05-18T23:42:17.787921"
+        }
+    },
+    "TITAN.NS": {
+        "Jan-Apr (Months 1-4)": {
+            "symbol": "TITAN.NS",
+            "window": "Jan-Apr (Months 1-4)",
+            "initial_capital": 100000,
+            "final_value": 135774.8143320913,
+            "cagr": 2.99,
+            "max_drawdown": -6.26,
+            "win_rate": 54.55,
+            "total_trades": 11,
+            "timestamp": "2026-05-18T23:42:19.104577"
+        },
+        "May-Aug (Months 5-8)": {
+            "symbol": "TITAN.NS",
+            "window": "May-Aug (Months 5-8)",
+            "initial_capital": 100000,
+            "final_value": 94411.92809804005,
+            "cagr": -0.55,
+            "max_drawdown": -15.25,
+            "win_rate": 36.36,
+            "total_trades": 11,
+            "timestamp": "2026-05-18T23:42:19.205516"
+        },
+        "Sep-Dec (Months 9-12)": {
+            "symbol": "TITAN.NS",
+            "window": "Sep-Dec (Months 9-12)",
+            "initial_capital": 100000,
+            "final_value": 106817.22473919245,
+            "cagr": 0.64,
+            "max_drawdown": -12.94,
+            "win_rate": 20.0,
+            "total_trades": 10,
+            "timestamp": "2026-05-18T23:42:19.322142"
+        }
+    },
+    "KALYANKJIL.NS": {
+        "Jan-Apr (Months 1-4)": {
+            "symbol": "KALYANKJIL.NS",
+            "window": "Jan-Apr (Months 1-4)",
+            "initial_capital": 100000,
+            "final_value": 105510.48989701661,
+            "cagr": 1.05,
+            "max_drawdown": -7.15,
+            "win_rate": 50.0,
+            "total_trades": 6,
+            "timestamp": "2026-05-18T23:42:20.339453"
+        },
+        "May-Aug (Months 5-8)": {
+            "symbol": "KALYANKJIL.NS",
+            "window": "May-Aug (Months 5-8)",
+            "initial_capital": 100000,
+            "final_value": 82427.71097585393,
+            "cagr": -3.69,
+            "max_drawdown": -17.57,
+            "win_rate": 0.0,
+            "total_trades": 6,
+            "timestamp": "2026-05-18T23:42:20.397303"
+        },
+        "Sep-Dec (Months 9-12)": {
+            "symbol": "KALYANKJIL.NS",
+            "window": "Sep-Dec (Months 9-12)",
+            "initial_capital": 100000,
+            "final_value": 113318.39835256281,
+            "cagr": 2.46,
+            "max_drawdown": -9.83,
+            "win_rate": 60.0,
+            "total_trades": 5,
+            "timestamp": "2026-05-18T23:42:20.456170"
+        }
+    },
+    "TRENT.NS": {
+        "Jan-Apr (Months 1-4)": {
+            "symbol": "TRENT.NS",
+            "window": "Jan-Apr (Months 1-4)",
+            "initial_capital": 100000,
+            "final_value": 81347.56645469576,
+            "cagr": -1.97,
+            "max_drawdown": -20.06,
+            "win_rate": 27.27,
+            "total_trades": 11,
+            "timestamp": "2026-05-18T23:42:21.652553"
+        },
+        "May-Aug (Months 5-8)": {
+            "symbol": "TRENT.NS",
+            "window": "May-Aug (Months 5-8)",
+            "initial_capital": 100000,
+            "final_value": 95912.60991441578,
+            "cagr": -0.4,
+            "max_drawdown": -14.74,
+            "win_rate": 27.27,
+            "total_trades": 11,
+            "timestamp": "2026-05-18T23:42:21.769581"
+        },
+        "Sep-Dec (Months 9-12)": {
+            "symbol": "TRENT.NS",
+            "window": "Sep-Dec (Months 9-12)",
+            "initial_capital": 100000,
+            "final_value": 74175.75688592964,
+            "cagr": -2.84,
+            "max_drawdown": -25.82,
+            "win_rate": 0.0,
+            "total_trades": 10,
+            "timestamp": "2026-05-18T23:42:21.886719"
+        }
+    },
+    "UPL.NS": {
+        "Jan-Apr (Months 1-4)": {
+            "symbol": "UPL.NS",
+            "window": "Jan-Apr (Months 1-4)",
+            "initial_capital": 100000,
+            "final_value": 121073.26405588332,
+            "cagr": 1.86,
+            "max_drawdown": -5.07,
+            "win_rate": 36.36,
+            "total_trades": 11,
+            "timestamp": "2026-05-18T23:42:23.120241"
+        },
+        "May-Aug (Months 5-8)": {
+            "symbol": "UPL.NS",
+            "window": "May-Aug (Months 5-8)",
+            "initial_capital": 100000,
+            "final_value": 93644.33406600413,
+            "cagr": -0.63,
+            "max_drawdown": -15.93,
+            "win_rate": 9.09,
+            "total_trades": 11,
+            "timestamp": "2026-05-18T23:42:23.235906"
+        },
+        "Sep-Dec (Months 9-12)": {
+            "symbol": "UPL.NS",
+            "window": "Sep-Dec (Months 9-12)",
+            "initial_capital": 100000,
+            "final_value": 79682.74071769562,
+            "cagr": -2.16,
+            "max_drawdown": -20.32,
+            "win_rate": 10.0,
+            "total_trades": 10,
+            "timestamp": "2026-05-18T23:42:23.401625"
+        }
+    },
+    "PIIND.NS": {
+        "Jan-Apr (Months 1-4)": {
+            "symbol": "PIIND.NS",
+            "window": "Jan-Apr (Months 1-4)",
+            "initial_capital": 100000,
+            "final_value": 87874.34045975792,
+            "cagr": -1.24,
+            "max_drawdown": -16.8,
+            "win_rate": 18.18,
+            "total_trades": 11,
+            "timestamp": "2026-05-18T23:42:24.687054"
+        },
+        "May-Aug (Months 5-8)": {
+            "symbol": "PIIND.NS",
+            "window": "May-Aug (Months 5-8)",
+            "initial_capital": 100000,
+            "final_value": 77554.05848635676,
+            "cagr": -2.42,
+            "max_drawdown": -22.45,
+            "win_rate": 9.09,
+            "total_trades": 11,
+            "timestamp": "2026-05-18T23:42:24.804930"
+        },
+        "Sep-Dec (Months 9-12)": {
+            "symbol": "PIIND.NS",
+            "window": "Sep-Dec (Months 9-12)",
+            "initial_capital": 100000,
+            "final_value": 89443.51127639413,
+            "cagr": -1.07,
+            "max_drawdown": -12.62,
+            "win_rate": 30.0,
+            "total_trades": 10,
+            "timestamp": "2026-05-18T23:42:24.921360"
+        }
+    },
+    "COROMANDEL.NS": {
+        "Jan-Apr (Months 1-4)": {
+            "symbol": "COROMANDEL.NS",
+            "window": "Jan-Apr (Months 1-4)",
+            "initial_capital": 100000,
+            "final_value": 90256.56460321961,
+            "cagr": -0.98,
+            "max_drawdown": -11.16,
+            "win_rate": 27.27,
+            "total_trades": 11,
+            "timestamp": "2026-05-18T23:42:26.169360"
+        },
+        "May-Aug (Months 5-8)": {
+            "symbol": "COROMANDEL.NS",
+            "window": "May-Aug (Months 5-8)",
+            "initial_capital": 100000,
+            "final_value": 96550.81371858905,
+            "cagr": -0.34,
+            "max_drawdown": -7.54,
+            "win_rate": 30.0,
+            "total_trades": 10,
+            "timestamp": "2026-05-18T23:42:26.270452"
+        },
+        "Sep-Dec (Months 9-12)": {
+            "symbol": "COROMANDEL.NS",
+            "window": "Sep-Dec (Months 9-12)",
+            "initial_capital": 100000,
+            "final_value": 79167.93616562284,
+            "cagr": -2.23,
+            "max_drawdown": -20.83,
+            "win_rate": 10.0,
+            "total_trades": 10,
+            "timestamp": "2026-05-18T23:42:26.388332"
+        }
+    },
+    "BAYERCROP.NS": {
+        "Jan-Apr (Months 1-4)": {
+            "symbol": "BAYERCROP.NS",
+            "window": "Jan-Apr (Months 1-4)",
+            "initial_capital": 100000,
+            "final_value": 90782.74310864005,
+            "cagr": -0.93,
+            "max_drawdown": -10.76,
+            "win_rate": 36.36,
+            "total_trades": 11,
+            "timestamp": "2026-05-18T23:42:27.654064"
+        },
+        "May-Aug (Months 5-8)": {
+            "symbol": "BAYERCROP.NS",
+            "window": "May-Aug (Months 5-8)",
+            "initial_capital": 100000,
+            "final_value": 80267.95153920242,
+            "cagr": -2.1,
+            "max_drawdown": -19.73,
+            "win_rate": 0.0,
+            "total_trades": 11,
+            "timestamp": "2026-05-18T23:42:27.771422"
+        },
+        "Sep-Dec (Months 9-12)": {
+            "symbol": "BAYERCROP.NS",
+            "window": "Sep-Dec (Months 9-12)",
+            "initial_capital": 100000,
+            "final_value": 84785.00829232595,
+            "cagr": -1.58,
+            "max_drawdown": -15.48,
+            "win_rate": 30.0,
+            "total_trades": 10,
+            "timestamp": "2026-05-18T23:42:27.887164"
+        }
+    },
+    "ESCORTS.NS": {
+        "Jan-Apr (Months 1-4)": {
+            "symbol": "ESCORTS.NS",
+            "window": "Jan-Apr (Months 1-4)",
+            "initial_capital": 100000,
+            "final_value": 101034.40225639935,
+            "cagr": 0.1,
+            "max_drawdown": -5.45,
+            "win_rate": 54.55,
+            "total_trades": 11,
+            "timestamp": "2026-05-18T23:42:29.038395"
+        },
+        "May-Aug (Months 5-8)": {
+            "symbol": "ESCORTS.NS",
+            "window": "May-Aug (Months 5-8)",
+            "initial_capital": 100000,
+            "final_value": 97695.62344392826,
+            "cagr": -0.22,
+            "max_drawdown": -15.02,
+            "win_rate": 36.36,
+            "total_trades": 11,
+            "timestamp": "2026-05-18T23:42:29.169923"
+        },
+        "Sep-Dec (Months 9-12)": {
+            "symbol": "ESCORTS.NS",
+            "window": "Sep-Dec (Months 9-12)",
+            "initial_capital": 100000,
+            "final_value": 98325.26188531877,
+            "cagr": -0.16,
+            "max_drawdown": -28.68,
+            "win_rate": 30.0,
+            "total_trades": 10,
+            "timestamp": "2026-05-18T23:42:29.270927"
+        }
+    },
+    "PAGEIND.NS": {
+        "Jan-Apr (Months 1-4)": {
+            "symbol": "PAGEIND.NS",
+            "window": "Jan-Apr (Months 1-4)",
+            "initial_capital": 100000,
+            "final_value": 115346.81742633646,
+            "cagr": 1.39,
+            "max_drawdown": -8.63,
+            "win_rate": 63.64,
+            "total_trades": 11,
+            "timestamp": "2026-05-18T23:42:30.587285"
+        },
+        "May-Aug (Months 5-8)": {
+            "symbol": "PAGEIND.NS",
+            "window": "May-Aug (Months 5-8)",
+            "initial_capital": 100000,
+            "final_value": 90703.15646913263,
+            "cagr": -0.94,
+            "max_drawdown": -9.3,
+            "win_rate": 27.27,
+            "total_trades": 11,
+            "timestamp": "2026-05-18T23:42:30.703797"
+        },
+        "Sep-Dec (Months 9-12)": {
+            "symbol": "PAGEIND.NS",
+            "window": "Sep-Dec (Months 9-12)",
+            "initial_capital": 100000,
+            "final_value": 81784.39270494698,
+            "cagr": -1.92,
+            "max_drawdown": -18.42,
+            "win_rate": 10.0,
+            "total_trades": 10,
+            "timestamp": "2026-05-18T23:42:30.820620"
+        }
+    },
+    "RELAXO.NS": {
+        "Jan-Apr (Months 1-4)": {
+            "symbol": "RELAXO.NS",
+            "window": "Jan-Apr (Months 1-4)",
+            "initial_capital": 100000,
+            "final_value": 135679.428718264,
+            "cagr": 2.98,
+            "max_drawdown": -5.09,
+            "win_rate": 45.45,
+            "total_trades": 11,
+            "timestamp": "2026-05-18T23:42:32.087179"
+        },
+        "May-Aug (Months 5-8)": {
+            "symbol": "RELAXO.NS",
+            "window": "May-Aug (Months 5-8)",
+            "initial_capital": 100000,
+            "final_value": 101059.61697347845,
+            "cagr": 0.1,
+            "max_drawdown": -13.1,
+            "win_rate": 36.36,
+            "total_trades": 11,
+            "timestamp": "2026-05-18T23:42:32.209164"
+        },
+        "Sep-Dec (Months 9-12)": {
+            "symbol": "RELAXO.NS",
+            "window": "Sep-Dec (Months 9-12)",
+            "initial_capital": 100000,
+            "final_value": 94691.61461735013,
+            "cagr": -0.52,
+            "max_drawdown": -8.28,
+            "win_rate": 40.0,
+            "total_trades": 10,
+            "timestamp": "2026-05-18T23:42:32.320401"
+        }
+    },
+    "INDIGO.NS": {
+        "Jan-Apr (Months 1-4)": {
+            "symbol": "INDIGO.NS",
+            "window": "Jan-Apr (Months 1-4)",
+            "initial_capital": 100000,
+            "final_value": 126632.00477703354,
+            "cagr": 2.3,
+            "max_drawdown": -3.52,
+            "win_rate": 63.64,
+            "total_trades": 11,
+            "timestamp": "2026-05-18T23:42:33.687797"
+        },
+        "May-Aug (Months 5-8)": {
+            "symbol": "INDIGO.NS",
+            "window": "May-Aug (Months 5-8)",
+            "initial_capital": 100000,
+            "final_value": 98513.64206011668,
+            "cagr": -0.14,
+            "max_drawdown": -12.52,
+            "win_rate": 36.36,
+            "total_trades": 11,
+            "timestamp": "2026-05-18T23:42:33.803701"
+        },
+        "Sep-Dec (Months 9-12)": {
+            "symbol": "INDIGO.NS",
+            "window": "Sep-Dec (Months 9-12)",
+            "initial_capital": 100000,
+            "final_value": 88946.01676829255,
+            "cagr": -1.12,
+            "max_drawdown": -14.09,
+            "win_rate": 20.0,
+            "total_trades": 10,
+            "timestamp": "2026-05-18T23:42:33.920683"
+        }
+    },
+    "IRCTC.NS": {
+        "Jan-Apr (Months 1-4)": {
+            "symbol": "IRCTC.NS",
+            "window": "Jan-Apr (Months 1-4)",
+            "initial_capital": 100000,
+            "final_value": 93947.81874459436,
+            "cagr": -0.94,
+            "max_drawdown": -11.01,
+            "win_rate": 28.57,
+            "total_trades": 7,
+            "timestamp": "2026-05-18T23:42:35.239070"
+        },
+        "May-Aug (Months 5-8)": {
+            "symbol": "IRCTC.NS",
+            "window": "May-Aug (Months 5-8)",
+            "initial_capital": 100000,
+            "final_value": 86981.42670410361,
+            "cagr": -2.09,
+            "max_drawdown": -13.02,
+            "win_rate": 14.29,
+            "total_trades": 7,
+            "timestamp": "2026-05-18T23:42:35.305830"
+        },
+        "Sep-Dec (Months 9-12)": {
+            "symbol": "IRCTC.NS",
+            "window": "Sep-Dec (Months 9-12)",
+            "initial_capital": 100000,
+            "final_value": 148399.52217977305,
+            "cagr": 6.17,
+            "max_drawdown": -8.47,
+            "win_rate": 42.86,
+            "total_trades": 7,
+            "timestamp": "2026-05-18T23:42:35.388444"
+        }
+    },
+    "VBL.NS": {
+        "Jan-Apr (Months 1-4)": {
+            "symbol": "VBL.NS",
+            "window": "Jan-Apr (Months 1-4)",
+            "initial_capital": 100000,
+            "final_value": 91427.2609502243,
+            "cagr": -0.94,
+            "max_drawdown": -13.0,
+            "win_rate": 40.0,
+            "total_trades": 10,
+            "timestamp": "2026-05-18T23:42:36.620659"
+        },
+        "May-Aug (Months 5-8)": {
+            "symbol": "VBL.NS",
+            "window": "May-Aug (Months 5-8)",
+            "initial_capital": 100000,
+            "final_value": 79064.54791315932,
+            "cagr": -2.44,
+            "max_drawdown": -22.5,
+            "win_rate": 30.0,
+            "total_trades": 10,
+            "timestamp": "2026-05-18T23:42:36.721533"
+        },
+        "Sep-Dec (Months 9-12)": {
+            "symbol": "VBL.NS",
+            "window": "Sep-Dec (Months 9-12)",
+            "initial_capital": 100000,
+            "final_value": 110821.10243008751,
+            "cagr": 1.08,
+            "max_drawdown": -8.12,
+            "win_rate": 50.0,
+            "total_trades": 10,
+            "timestamp": "2026-05-18T23:42:36.822451"
+        }
+    },
+    "TATACONSUM.NS": {
+        "Jan-Apr (Months 1-4)": {
+            "symbol": "TATACONSUM.NS",
+            "window": "Jan-Apr (Months 1-4)",
+            "initial_capital": 100000,
+            "final_value": 101045.45400470585,
+            "cagr": 0.1,
+            "max_drawdown": -12.52,
+            "win_rate": 36.36,
+            "total_trades": 11,
+            "timestamp": "2026-05-18T23:42:38.138307"
+        },
+        "May-Aug (Months 5-8)": {
+            "symbol": "TATACONSUM.NS",
+            "window": "May-Aug (Months 5-8)",
+            "initial_capital": 100000,
+            "final_value": 79954.18036940631,
+            "cagr": -2.13,
+            "max_drawdown": -20.05,
+            "win_rate": 27.27,
+            "total_trades": 11,
+            "timestamp": "2026-05-18T23:42:38.255017"
+        },
+        "Sep-Dec (Months 9-12)": {
+            "symbol": "TATACONSUM.NS",
+            "window": "Sep-Dec (Months 9-12)",
+            "initial_capital": 100000,
+            "final_value": 87547.43754575116,
+            "cagr": -1.27,
+            "max_drawdown": -13.47,
+            "win_rate": 50.0,
+            "total_trades": 10,
+            "timestamp": "2026-05-18T23:42:38.354922"
+        }
+    }
+}

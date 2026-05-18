@@ -2,51 +2,191 @@
     "VOLTAS.NS": {
         "symbol": "VOLTAS.NS",
         "initial_capital": 100000,
-        "final_value": 102059.64023792073,
-        "cagr": 0.18,
-        "max_drawdown": -35.47,
-        "win_rate": 16.67,
-        "total_trades": 12,
-        "timestamp": "2026-05-17T18:17:36.805397"
+        "final_value": 140067.73761690542,
+        "cagr": 3.01,
+        "max_drawdown": -17.69,
+        "win_rate": 36.36,
+        "total_trades": 11,
+        "timestamp": "2026-05-18T23:11:42.819124"
+    },
+    "BLUESTARCO.NS": {
+        "symbol": "BLUESTARCO.NS",
+        "initial_capital": 100000,
+        "final_value": 244439.86797884948,
+        "cagr": 8.17,
+        "max_drawdown": -17.69,
+        "win_rate": 45.45,
+        "total_trades": 11,
+        "timestamp": "2026-05-18T23:11:43.440838"
     },
     "HAVELLS.NS": {
         "symbol": "HAVELLS.NS",
         "initial_capital": 100000,
-        "final_value": 117968.97531387303,
-        "cagr": 1.46,
+        "final_value": 110142.71693393454,
+        "cagr": 0.85,
         "max_drawdown": -21.6,
-        "win_rate": 33.33,
-        "total_trades": 12,
-        "timestamp": "2026-05-17T18:17:37.896369"
+        "win_rate": 18.18,
+        "total_trades": 11,
+        "timestamp": "2026-05-18T23:11:44.010493"
+    },
+    "AMBER.NS": {
+        "symbol": "AMBER.NS",
+        "initial_capital": 100000,
+        "final_value": 273355.8421978482,
+        "cagr": 12.89,
+        "max_drawdown": -9.27,
+        "win_rate": 50.0,
+        "total_trades": 8,
+        "timestamp": "2026-05-18T23:11:44.461967"
     },
     "MARUTI.NS": {
         "symbol": "MARUTI.NS",
         "initial_capital": 100000,
-        "final_value": 132346.10489080264,
-        "cagr": 2.5,
-        "max_drawdown": -7.15,
-        "win_rate": 54.55,
+        "final_value": 159990.3204880746,
+        "cagr": 4.22,
+        "max_drawdown": -9.67,
+        "win_rate": 45.45,
         "total_trades": 11,
-        "timestamp": "2026-05-17T18:17:39.019681"
+        "timestamp": "2026-05-18T23:11:44.971482"
     },
     "TITAN.NS": {
         "symbol": "TITAN.NS",
         "initial_capital": 100000,
-        "final_value": 211150.07401963236,
-        "cagr": 6.8,
-        "max_drawdown": -9.27,
-        "win_rate": 54.55,
+        "final_value": 159496.5660004235,
+        "cagr": 4.19,
+        "max_drawdown": -17.69,
+        "win_rate": 36.36,
         "total_trades": 11,
-        "timestamp": "2026-05-17T18:17:40.982331"
+        "timestamp": "2026-05-18T23:11:45.494709"
+    },
+    "KALYANKJIL.NS": {
+        "symbol": "KALYANKJIL.NS",
+        "initial_capital": 100000,
+        "final_value": 164573.23704465287,
+        "cagr": 10.17,
+        "max_drawdown": -4.75,
+        "win_rate": 60.0,
+        "total_trades": 5,
+        "timestamp": "2026-05-18T23:11:45.873545"
+    },
+    "TRENT.NS": {
+        "symbol": "TRENT.NS",
+        "initial_capital": 100000,
+        "final_value": 93430.52016988711,
+        "cagr": -0.6,
+        "max_drawdown": -17.69,
+        "win_rate": 27.27,
+        "total_trades": 11,
+        "timestamp": "2026-05-18T23:11:46.504745"
+    },
+    "UPL.NS": {
+        "symbol": "UPL.NS",
+        "initial_capital": 100000,
+        "final_value": 58548.37257561643,
+        "cagr": -4.6,
+        "max_drawdown": -41.45,
+        "win_rate": 0.0,
+        "total_trades": 11,
+        "timestamp": "2026-05-18T23:11:47.102875"
+    },
+    "PIIND.NS": {
+        "symbol": "PIIND.NS",
+        "initial_capital": 100000,
+        "final_value": 132309.7610899389,
+        "cagr": 2.49,
+        "max_drawdown": -21.6,
+        "win_rate": 27.27,
+        "total_trades": 11,
+        "timestamp": "2026-05-18T23:11:47.628746"
     },
     "COROMANDEL.NS": {
         "symbol": "COROMANDEL.NS",
         "initial_capital": 100000,
-        "final_value": 78506.96468796721,
-        "cagr": -2.11,
-        "max_drawdown": -28.36,
+        "final_value": 84318.90426324455,
+        "cagr": -1.49,
+        "max_drawdown": -25.32,
+        "win_rate": 9.09,
+        "total_trades": 11,
+        "timestamp": "2026-05-18T23:11:48.244986"
+    },
+    "BAYERCROP.NS": {
+        "symbol": "BAYERCROP.NS",
+        "initial_capital": 100000,
+        "final_value": 86819.74899579043,
+        "cagr": -1.23,
+        "max_drawdown": -17.69,
         "win_rate": 18.18,
         "total_trades": 11,
-        "timestamp": "2026-05-17T18:17:42.804086"
+        "timestamp": "2026-05-18T23:11:48.743544"
+    },
+    "ESCORTS.NS": {
+        "symbol": "ESCORTS.NS",
+        "initial_capital": 100000,
+        "final_value": 103237.3464994832,
+        "cagr": 0.28,
+        "max_drawdown": -21.6,
+        "win_rate": 18.18,
+        "total_trades": 11,
+        "timestamp": "2026-05-18T23:11:49.264444"
+    },
+    "PAGEIND.NS": {
+        "symbol": "PAGEIND.NS",
+        "initial_capital": 100000,
+        "final_value": 185864.05811961752,
+        "cagr": 5.6,
+        "max_drawdown": -9.27,
+        "win_rate": 36.36,
+        "total_trades": 11,
+        "timestamp": "2026-05-18T23:11:49.791849"
+    },
+    "RELAXO.NS": {
+        "symbol": "RELAXO.NS",
+        "initial_capital": 100000,
+        "final_value": 113346.88977418953,
+        "cagr": 1.11,
+        "max_drawdown": -25.32,
+        "win_rate": 18.18,
+        "total_trades": 11,
+        "timestamp": "2026-05-18T23:11:50.358604"
+    },
+    "INDIGO.NS": {
+        "symbol": "INDIGO.NS",
+        "initial_capital": 100000,
+        "final_value": 115096.87585814063,
+        "cagr": 1.35,
+        "max_drawdown": -17.69,
+        "win_rate": 20.0,
+        "total_trades": 10,
+        "timestamp": "2026-05-18T23:11:50.903528"
+    },
+    "IRCTC.NS": {
+        "symbol": "IRCTC.NS",
+        "initial_capital": 100000,
+        "final_value": 133104.59855483775,
+        "cagr": 4.43,
+        "max_drawdown": -17.69,
+        "win_rate": 33.33,
+        "total_trades": 6,
+        "timestamp": "2026-05-18T23:11:51.373941"
+    },
+    "VBL.NS": {
+        "symbol": "VBL.NS",
+        "initial_capital": 100000,
+        "final_value": 70267.83001013026,
+        "cagr": -3.64,
+        "max_drawdown": -29.73,
+        "win_rate": 11.11,
+        "total_trades": 9,
+        "timestamp": "2026-05-18T23:11:51.941382"
+    },
+    "TATACONSUM.NS": {
+        "symbol": "TATACONSUM.NS",
+        "initial_capital": 100000,
+        "final_value": 191639.4819806432,
+        "cagr": 5.88,
+        "max_drawdown": -21.6,
+        "win_rate": 36.36,
+        "total_trades": 11,
+        "timestamp": "2026-05-18T23:11:52.524725"
     }
 }
